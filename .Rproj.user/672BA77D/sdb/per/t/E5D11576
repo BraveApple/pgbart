@@ -1,0 +1,20 @@
+{
+    "collab_server" : "",
+    "contents" : "library(pgbart)\n\nf = function(x){\n  10*sin(pi*x[,1]*x[,2]) + 20*(x[,3]-.5)^2+10*x[,4]+5*x[,5]\n}\n\nsigma = 2.0  #y = f(x) + sigma*z , z~N(0,1)\nn = 100      #number of observations\nset.seed(99)\nx=matrix(runif(n*10),n,10) #10 variables, only first 5 matter\nEy = f(x)\ny=Ey+sigma*rnorm(n)\n\nfit.pgbart <- pgbart_train(train_data = x,\n                           train_label = y,\n                           model_file = \"./pgbart.model\",\n                           nskip=100, ndpost=200,\n                           if_test = FALSE) #the output path is locale by default.\nsummary(fit.pgbart$train$sigma)\n",
+    "created" : 1497925427298.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "804682106",
+    "id" : "E5D11576",
+    "lastKnownWriteTime" : 1490681117,
+    "last_content_update" : 1490681117,
+    "path" : "E:/RStudio/pgbart/demo/do.R",
+    "project_path" : "demo/do.R",
+    "properties" : {
+    },
+    "relative_order" : 1,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

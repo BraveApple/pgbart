@@ -1,0 +1,8 @@
+useDynLib(pgbart)
+
+export(pgbart_predict,
+       pgbart_train
+)
+
+importFrom(Rcpp, evalCpp)
+

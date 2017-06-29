@@ -1,0 +1,19 @@
+Package: pgbart
+Type: Package
+Title: Particle Gibbs for Bayesian Additive Regression Trees Sampler
+Version: 0.5.0
+Author: MCPRL
+Maintainer: MCPRL <olilaco@163.com>
+Description: Fits Bayesian additive regression trees (BART) while allowing
+    the updating of predictors or response so that BART can be incorporated as a
+    conditional model in a Gibbs/MH sampler. Also serves as a drop-in replacement
+    for package BayesTree.
+License: GPL(>=2)
+Encoding: UTF-8
+LazyData: true
+Imports: Rcpp
+LinkingTo: Rcpp
+RoxygenNote: 5.0.1
+SystemRequirements: GNU make
+NeedsCompilation: yes
+Packaged: 2017-03-28 06:05:18 UTC; lilac

@@ -1,0 +1,36 @@
+EXTERNAL_DIR = ./external
+PGBART_DIR = ./pgbart
+PROJECT_SRC_DIR = .
+
+PKG_CPPFLAGS = -I $(PROJECT_SRC_DIR) -I $(3RDPARTY_DIR) -pthread
+PKG_CPPFLAGS += -DRCPP_NEW_DATE_DATETIME_VECTORS
+PKG_CXXFLAGS = -I $(PROJECT_SRC_DIR) -I $(3RDPARTY_DIR) -pthread
+PKG_CXXFLAGS += -DRCPP_NEW_DATE_DATETIME_VECTORS
+ALL_CPPFLAGS = $(R_XTRA_CPPFLAGS) $(PKG_CPPFLAGS) $(CPPFLAGS) -std=c++11
+ALL_CXXFLAGS = $(R_XTRA_CPPFLAGS) $(PKG_CPPFLAGS) $(CXXFLAGS) -std=c++11
+CXX_STD =CXX11
+
+PKG_LIBS = $(PGBART_DIR)/src/libpgbart.a $(EXTERNAL_DIR)/src/libexternal.a $(LAPACK_LIBS) $(BLAS_LIBS) $(FLIBS) -lpthread
+
+.PHONY: all $(EXTERNAL_DIR)/src/libexternal.a $(PGBART_DIR)/src/libpgbart.a clean
+
+all: $(SHLIB)
+
+$(SHLIB): $(EXTERNAL_DIR)/src/libexternal.a $(PGBART_DIR)/src/libpgbart.a
+
+$(EXTERNAL_DIR)/src/libexternal.a:
+	@(cd $(EXTERNAL_DIR)/src && $(MAKE) libexternal.a \
+	CC="$(CC)" R_XTRA_CPPFLAGS="$(R_XTRA_CPPFLAGS)" \
+	CPPFLAGS="-pthread $(CPPFLAGS)" \
+	CFLAGS="$(R_XTRA_CFLAGS) $(CPICFLAGS) $(CFLAGS)" \
+	AR="$(AR)" ARFLAGS="$(ARFLAGS)" RANLIB="$(RANLIB)")
+$(PGBART_DIR)/src/libpgbart.a:
+	@(cd $(PGBART_DIR)/src && $(MAKE) libpgbart.a \
+	CXX="$(CXX)" R_XTRA_CPPFLAGS="$(R_XTRA_CPPFLAGS)" \
+	CPPFLAGS="-pthread -std=c++11 $(CPPFLAGS)" \
+	CXXFLAGS="$(R_XTRA_CXXFLAGS) $(CXXPICFLAGS) $(CXXFLAGS)" \
+	AR="$(AR)" ARFLAGS="$(ARFLAGS)" RANLIB="$(RANLIB)")
+clean :
+	@(cd $(EXTERNAL_DIR)/src && $(MAKE) clean)
+	@(cd $(PGBART_DIR)/src && $(MAKE) clean)
+	rm -f *.so *.dll *.o
