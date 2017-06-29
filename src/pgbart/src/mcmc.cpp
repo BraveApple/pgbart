@@ -6,6 +6,7 @@
 using namespace pgbart::math;
 
 namespace pgbart {
+
 Pmcmc::Pmcmc() {
   this->p_ptr = nullptr;
 }
@@ -90,6 +91,7 @@ bool Pmcmc::sample(const Data& data, const Control& control, const Param& param,
   bool change = update_p(particles_ptr, log_weights_ptr, log_pd, control);
   return change;
 }
+} // namesapce pgbart
 
 namespace pgbart {
 Pmcmc_Ptr init_tree_mcmc(const Data& data_train, const Control& control, const Param& param,
