@@ -91,6 +91,7 @@ bool Pmcmc::sample(const Data& data, const Control& control, const Param& param,
   bool change = update_p(particles_ptr, log_weights_ptr, log_pd, control);
   return change;
 }
+
 } // namesapce pgbart
 
 namespace pgbart {
@@ -110,6 +111,8 @@ tuple<Particle_Ptr, bool> run_mcmc_single_tree(Particle_Ptr p_ptr, const Control
   p_ptr = pmcmc_ptr->p_ptr;
   return make_tuple(p_ptr, change);
 }
+
+} // namespace pgbart
 
 namespace pgbart {
 
@@ -311,7 +314,31 @@ bool TreeMCMC::change(const Data& train_data, const Control& control, const Para
   bool do_not_split_node_id; SplitInfo split_info; double logprior_nodeid;
   tie(do_not_split_node_id, &split_info, logprior_nodeid) = 
     this->sample_split_prior(node_id, train_data, param, control, cache);
-
+  // Note: this just samples a split criterion, not guaranteed to "change"
+  if (do_not_split_node_id) {
+    std::cout << "do not split node id" << std::endl;
+  }
+  IntVector_Ptr nodes_subtree_ptr = this->get_nodes_subtree(node_id);
+  IntVector_Ptr nodes_not_in_subtree_ptr = this->get_nodes_not_in_subtree(node_id);
+  // self.create_new_statistics(nodes_subtree, nodes_not_in_subtree, node_id, settings)
+  this->create_new_statistics(nodes_subtree_ptr, nodes_not_in_subtree_ptr, node_id);
+  this->node_info_new[node_id] = split_info;
+  // self.evaluate_new_subtree(data, node_id, param, nodes_subtree, cache, settings)
+  this->evaluate_new_subtree(train_data, node_id, param, nodes_subtree_ptr, cache);
+  // log_acc will be modified below
+  double log_acc_temp = 0; double loglik_diff = 0; logprior_diff = 0;
+  // log_acc_temp, loglik_diff, logprior_diff = self.compute_log_acc_cs(nodes_subtree, node_id)
+  const double log_acc = log_acc_temp = log_acc_temp + this->log_prior[node_id]
+    - this->logprior_new[node_id];
+  const double log_r = log(simulate_continuous_uniform_distribution(0, 1));
+  if (log_r <= log_acc) {
+    this->node_info[node_id] = this->node_info_new[node_id];
+    // self.update_subtree(node_id, nodes_subtree, settings)
+    change = true;
+  } else {
+    change = false;
+  }
+  return change;
 }
 
 tuple<bool, MoveType> TreeMCMC::sample(const Data& train_data, const Control& control, const Param& param, 

@@ -108,7 +108,7 @@ struct SplitInfo {
   SplitInfo() : feat_id_chosen(0U), split_chosen(0), idx_split_global(0U){}
   string toString();
 
-  bool operator==(const SplitInfo &other) const {
+  bool operator==(const SplitInfo& other) const {
     if (this->feat_id_chosen != other.feat_id_chosen)
       return false;
     if (this->idx_split_global != other.idx_split_global)
@@ -116,6 +116,12 @@ struct SplitInfo {
     if (this->split_chosen != other.split_chosen)
       return false;
     return true;
+  }
+
+  void operator=(const SplitInfo& right) {
+    this->feat_id_chosen = right.feat_id_chosen;
+    this->split_chosen = right.split_chosen;
+    this->idx_split_global = right.idx_split_global;
   }
 };
 
