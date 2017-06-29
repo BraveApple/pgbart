@@ -322,13 +322,13 @@ bool TreeMCMC::change(const Data& train_data, const Control& control, const Para
   IntVector_Ptr nodes_not_in_subtree_ptr = this->get_nodes_not_in_subtree(node_id);
   // self.create_new_statistics(nodes_subtree, nodes_not_in_subtree, node_id, settings)
   this->create_new_statistics(nodes_subtree_ptr, nodes_not_in_subtree_ptr, node_id);
-  this->node_info_new[node_id] = split_info;
+  this->node_info_new[node_id] = this->node_info[node_id];
   // self.evaluate_new_subtree(data, node_id, param, nodes_subtree, cache, settings)
   this->evaluate_new_subtree(train_data, node_id, param, nodes_subtree_ptr, cache);
   // log_acc will be modified below
   double log_acc_temp = 0; double loglik_diff = 0; logprior_diff = 0;
   // log_acc_temp, loglik_diff, logprior_diff = self.compute_log_acc_cs(nodes_subtree, node_id)
-  const double log_acc = log_acc_temp = log_acc_temp + this->log_prior[node_id]
+  const double log_acc = log_acc_temp = log_acc_temp + this->log_prior[node_id];
     - this->logprior_new[node_id];
   const double log_r = log(simulate_continuous_uniform_distribution(0, 1));
   if (log_r <= log_acc) {
@@ -337,6 +337,37 @@ bool TreeMCMC::change(const Data& train_data, const Control& control, const Para
     change = true;
   } else {
     change = false;
+  }
+  return change;
+}
+
+bool TreeMCMC::swap(const Data& train_data, const Control& control, const Param& param, const Cache& cache,
+  const IntVector& grow_nodes) {
+  bool change = false;
+  if (this->inner_pc_pairs.size() == 0) {
+    return change;
+  }
+  const int id = simulate_discrete_uniform_distribution(0, this->inner_pc_pairs.size() - 1);
+  int node_id = 0; int child_id = 0;
+  tie(node_id, child_id) = this->inner_pc_pairs[id]; // (parent, child) pair
+  IntVector_Ptr nodes_subtree_ptr = this->get_nodes_subtree(node_id);
+  IntVector_Ptr nodes_not_in_subtree_ptr = this->get_nodes_not_in_subtree(node_id);
+  // self.create_new_statistics(nodes_subtree, nodes_not_in_subtree, node_id, settings)
+  this->create_new_statistics(nodes_subtree_ptr, nodes_not_in_subtree_ptr, node_id);
+  this->node_info_new[node_id] = this->node_info[node_id];
+  this->node_info_new[node_id] = this->node_info[child_id];
+  // self.evaluate_new_subtree(data, node_id, param, nodes_subtree, cache, settings)
+  this->evaluate_new_subtree(train_data, node_id, param, nodes_subtree_ptr, cache);
+  double log_acc = 0; double loglik_diff = 0; logprior_diff = 0;
+  // log_acc, loglik_diff, logprior_diff = self.compute_log_acc_cs(nodes_subtree, node_id)
+  const double log_r = log(simulate_continuous_uniform_distribution(0, 1));
+  if (log_r <= log_acc) {
+    this->node_info[node_id] = this->node_info_new[node_id];
+    this->node_info[child_id] = this->node_info_new[child_id];
+    // self.update_subtree(node_id, nodes_subtree, settings)
+    change = true;
+  } else {
+    change =false;
   }
   return change;
 }
@@ -356,7 +387,19 @@ tuple<bool, MoveType> TreeMCMC::sample(const Data& train_data, const Control& co
   bool change = false;
   switch(move_type) {
     case GROW: change = this->grow(train_data, control, param, cache, grow_nodes);
+    case PRUNE: change = this->prune(train_data, control, param, cache, grow_nodes);
+    case CHANGE: change = this->change(train_data, control, param, cache, grow_nodes);
+    case SWAP: change = this->swap(train_data, control, param, cache, grow_nodes);
+    default: { std::cout << "Error move type!" << std::endl; exit(1); } 
   }
+  if (change) {
+    this->tree_ptr->updateTreeDepth();
+    this->loglik_current = 0.0;
+    for (auto node_id : this->tree_ptr->leaf_node_ids) {
+      this->loglik_current += this->loglik[node_id];
+    }
+  }
+  return make_tuple(change, move_type);
 }
 
 } // namesapce pgbart

@@ -63,10 +63,10 @@ public:
     const IntVector& grow_nodes);
 
   bool change(const Data& train_data, const Control& control, const Param& param, const Cache& cache,
-      const IntVector& grow_nodes);
+    const IntVector& grow_nodes);
 
   bool swap(const Data& train_data, const Control& control, const Param& param, const Cache& cache,
-      const IntVector& grow_nodes);
+    const IntVector& grow_nodes);
 
   tuple<bool, MoveType> sample(const Data& train_data, const Control& control, const Param& param, 
     const Cache& cache);
