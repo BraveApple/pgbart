@@ -115,12 +115,11 @@ tuple<Particle_Ptr, bool> run_mcmc_single_tree(Particle_Ptr p_ptr, const Control
 
 } // namespace pgbart
 
-/**********************************************************************************
-******************************* TreeMCMC ******************************************
-***********************************************************************************/
+/*****************************
+********* TreeMCMC ***********
+******************************/
 namespace pgbart {
 
-// Get non_subtree of node_id
 IntVector_Ptr TreeMCMC::get_nodes_not_in_subtree(const int node_id) {
   IntVector_ptr reqd_nodes_ptr = make_shared<IntVector>();
   IntVector all_nodes(this->tree_ptr->leaf_node_ids);
@@ -129,18 +128,17 @@ IntVector_Ptr TreeMCMC::get_nodes_not_in_subtree(const int node_id) {
   IntVector_Ptr subtree_ptr = this->get_nodes_subtree(node_id);
   for (auto it = all_nodes.begin(); it != all_nodes.end(); it++) {
     auto iter = std::find(subtree_ptr->begin(), subtree_ptr->end(), *it);
-    if (iter == subtree_ptr.end()) { // Not found node in subtree
+    if (iter == subtree_ptr.end()) {
       reqd_nodes_ptr->push_back(*it);
     }
   }
   return reqd_nodes_ptr;
 }
 
-// Get subtree of node_id
 IntVector_Ptr TreeMCMC::get_nodes_subtree(const int node_id) {
   // NOTE: current node_id is included in nodes_subtree as well
   IntVector_Ptr node_list_ptr = make_shared<IntVector>();
-  IntVector expand {node_id}; // C++11 vector initialization type
+  IntVector expand {node_id};
   while (expand.size() > 0) {
     const int node = expand.back();
     expand.pop_back();
@@ -160,16 +158,14 @@ double TreeMCMC::compute_log_acc_g(const int node_id, const Param& param, const 
   const Cache& cache, const Control& control, const Data& data, const IntVector& grow_nodes) {
   // Effect of do_not_split dose not matter for node_id since it has chidren
   double logprior_children = 0.0;
-  const int left_id = this->tree_ptr->getLeftNodeID(node_id);
-  const int right_id = this->tree_ptr->getRightNodeID(node_id);
+  const int left = this->tree_ptr->getLeftNodeID(node_id);
+  const int right = this->tree_ptr->getRightNodeID(node_id);
 
   if (!no_valid_split_exists(data, cache, train_ids_left)) {
-    // Left child node will stop splitting, so we compute log-probability of non-split
-    logprior_children += log(compute_not_split_prob(this->tree_ptr, left_id, param));
+    logprior_children += log(compute_not_split_prob(this->tree_ptr, left, param));
   }
   if (!no_valid_split_exists(data, cache, train_ids_right)) {
-    // Right child node will stop splitting, so we compute log-probability of non-split
-    logprior_children += log(compute_not_split_prob(this->tree_ptr, right_id, param));
+    logprior_children += log(compute_not_split_prob(this->tree_ptr, right, param));
   }
 
   const double log_acc_prior = log(compute_split_prob(this->tree_ptr, node_id, param))
@@ -410,6 +406,154 @@ tuple<bool, MoveType> TreeMCMC::sample(const Data& train_data, const Control& co
   }
   return make_tuple(change, move_type);
 }
+
+bool TreeMCMC::check_if_same(const double log_acc, const double loglik_diff, const double logprior_diff){
+	double loglik_diff_2, logprior_diff_2, log_acc_2, node_id;
+	UINT leaf_legnth = this.tree_ptr->leaf_node_ids.size();
+	double sum1 = 0, sum2 = 0;
+	for (int i = 0; i < leaf_length; i++){
+		UINT node_id = this.tree_ptr->leaf_node_ids[i];
+		sum1 += this.loglik_new[node_id];
+		sum2 += this.loglik[node_id];
+	}
+	loglik_diff_2 = sum1 - sum2;
+	map<UINT, double>::iterator it;
+	it = this.logprior_new.begin();
+	sum1 = 0;
+	sum2 = 0;
+	while (it != this.logprior_new.end()){
+		sum1 += it.second;
+		it++;
+	}
+	it = this.logprior.begin();
+	while (it != this.logprior.end()){
+		sum2 += it.second;
+		it++;
+	}
+	logprior_diff_2 = sum1 - sum2;
+	log_acc_2 = loglik_diff_2 + logprior_diff_2;
+	if (fabs(log_acc_2) < 1e-10)
+		return true;
+	else{
+		if (log_acc != -INF && log_acc_2 == -INF){
+			std::cout << "check_if_terms_match" << std::endl;
+			std::cout << "loglik_diff = " << loglik_diff << ", " << "loglik_diff_2 = " << loglik_diff_2 << endl;
+			std::cout << "logprior_diff = " << logprior_diff << ", " << "logprior_diff_2 = " << logprior_diff_2 << endl;
+			return false;
+		}
+	}
+}
+
+tuple<double, double, double> TreeMCMC::compute_log_acc_cs(const IntVector& nodes_subtree){
+	//for change or swap operations
+	double loglik_old, loglik_new, loglik_diff, logprior_old, logprior_new, logprior_diff, log_acc;
+	UINT subtree_length = nodes_subtree.size();
+	double sum_loglik_old = 0, sum_loglik_new = 0, sum_prior_old = 0, sum_prior_new = 0;
+	for (UINT i = 0; i < subtree_length; i++){
+		UINT node_id = nodes_subtree[i];
+		if (check_if_included(this.tree_ptr->leaf_node_ids, node_id)){
+			sum_loglik_old += this.loglik[node_id];
+			sum_loglik_new += this.loglik_new[node_id];
+		}
+		logprior_old += this.logprior[node_id];
+		logprior_new += this.logprior_new[node_id];
+	}
+	loglik_diff = loglik_new - loglik_old;
+	logprior_diff = logprior_new - logprior_old;
+	log_acc = loglik_diff + logprior_diff;
+	return make_tuple(log_acc, loglik_diff, logprior_diff);
+}
+
+void TreeMCMC::create_new_statistics(const IntVector& nodes_subtree, const IntVector& nodes_not_in_subtree){
+	this.node_info_new = this.node_info;
+	UINT not_length = nodes_not_in_subtree.size();
+	for (UINT i = 0; i < not_length; i++){
+		UINT node_id = nodes_not_in_subtree[i];
+		this.loglik_new[node_id] = this.loglik[node_id];
+		this.logprior_new[node_id] = this.logprior[node_id];
+		this.train_ids_new[node_id] = this.train_ids[node_id];
+		this.sum_y_new[node_id] = this.sum_y[node_id];
+		this.sum_y2_new[node_id] = this.sum_y2[node_id];
+		this.n_points_new[node_id] = this.n_points[node_id];
+		this.mu_mean_post_new[node_id] = this.mu_mean_post[node_id];
+		this.mu_prec_post_new[node_id] = this.mu_prec_post[node_id];
+	}
+	UINT in_length = nodes_subtree.size();
+	for (UINT i = 0; i < in_length; i++){
+		UINT node_id = nodes_subtree[i];
+		this.loglik_new[node_id] = -INF;
+		this.logprior_new[node_id] = -INF;
+		this.train_ids_new[node_id].clear();
+		this.sum_y_new[node_id] = 0;
+		this.sum_y2_new[node_id] = 0;
+		this.n_points_new[node_id] = 0;
+		this.mu_mean_post_new[node_id] = this.mu_mean_post[node_id];
+		this.mu_prec_post_new[node_id] = this.mu_prec_post[node_id];
+	}
+}
+
+void TreeMCMC::evaluate_new_subtree(const Data& data, const UINT node_id_start, const Param& param, const IntVector& nodes_subtree, const Cache& cache, const Control& control){
+	for (UINT i : this.train_ids[node_id_start]){
+		IntVector x_ = data.x(i, ":");
+		double y_ = data.y_original[i];
+		UINT node_id = node_id_start;
+		while (true){
+			this.sum_y_new[node_id] += y_;
+			this.sum_y2_new[node_id] += y_ * y_;
+			this.n_points_new[node_id] += 1;
+			this.train_ids_new[node_id].push_back(i);
+			if (check_if_included(this.tree_ptr->leaf_node_ids, node_id))
+				break;
+			UINT left = 2 * node_id + 1;
+			UINT right = left + 1;
+			UINT feat_id = this.node_info_new[node_id].feat_id_chosen;
+			double split = this.node_info_new[node_id].split_chosen;
+			UINT idx_split_global = this.node_info_new[node_id].idx_split_global;
+			if (x_[feat_id] <= split)
+				node_id = left;
+			else
+				node_id = right;
+		}
+	}
+	for (UINT node_id : nodes_subtree){
+		this.loglik_new[node_id] = -INF;
+		if (this.n_points_new[node_id] > 0){
+			std::tie(this.loglik_new[node_id], this.mu_mean_post[node_id], this.mu_prec_post[node_id]) =
+				compute_normal_normalizer(this.sum_y_new[node_id], this.sum_y2_new[node_id], this.n_points_new[node_id], param, cache);
+		}
+		if (check_if_included(this.tree_ptr->leaf_node_ids, node_id)){
+			if (stop_split(this.train_ids_new[node_id], control, data, cache)){
+				this.logprior_new[node_id] = 0;
+			}
+			else{
+				this.logprior_new[node_id] = log(this.compute_pnosplit(node_id, param));
+			}
+		}
+		else{
+			this.recompute_prob_split(data, param, control, cache, node_id);
+		}
+	}
+}
+
+void TreeMCMC::update_subtree(const IntVector& nodes_subtree){
+	UINT subtree_length = nodes_subtree.size();
+	for (UINT i = 0; i < subtree_length; i++){
+		UINT node_id = nodes_subtree[i];
+		this.loglik[node_id] = this.loglok_new[node_id];
+		this.logprior[node_id] = this.logprior_new[node_id];
+		this.train_ids[node_id] = this.train_ids_new[node_id];
+		this.sum_y[node_id] = this.sum_y_new[node_id];
+		this.sum_y2[node_id] = this.sum_y2_new[node_id];
+		this.n_points[node_id] = this.n_points_new[node_id];
+		this.mu_mean_post[node_id] = this.mu_mean_post_new[node_id];
+		this.mu_prec_post[node_id] = this.mu_prec_post_new[node_id];
+	}
+}
+
+
+
+
+
 
 } // namesapce pgbart
 

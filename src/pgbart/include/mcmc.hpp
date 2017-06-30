@@ -45,6 +45,14 @@ private:
   IntVector both_children_terminal;
 
   map<UINT, SplitInfo> node_info_new;
+  map<UINT, double> loglik_new;
+  map<UINT, double> logprior_new;
+  map<UINT, IntVector> train_ids_new;
+  map<UINT, double> sum_y_new;
+  map<UINT, double> sum_y2_new;
+  map<UINT, UINT> n_points_new;
+  map<UINT, double> mu_mean_post_new;
+  map<UINT, double> mu_prec_post_new;
 
 public:
   IntVector_Ptr get_nodes_not_in_subtree(const int node_id);
@@ -73,6 +81,19 @@ public:
 
   tuple<bool, MoveType> sample(const Data& train_data, const Control& control, const Param& param, 
     const Cache& cache);
+
+  bool check_if_same(const double log_acc, const double loglik_diff, const double logprior_diff);
+
+  tuple<double, double, double> compute_log_acc_cs(const IntVector& nodes_subtree);
+
+  void create_new_statistics(const IntVector& nodes_subtree, const IntVector& nodes_not_in_subtree);
+
+  void evaluate_new_subtree(const Data& data, const UINT node_id_start, const Param& param, const IntVector& nodes_subtree, const Cache& cache, const Control& control);
+
+  void update_subtree(const IntVector& nodes_subtree);
+
+  
+
 };
 
 } // namesapce pgbart
