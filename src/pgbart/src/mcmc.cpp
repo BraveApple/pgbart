@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <algorithm>
+#include <memory>
 
 using namespace pgbart::math;
 
@@ -120,7 +121,7 @@ tuple<Particle_Ptr, bool> run_mcmc_single_tree(Particle_Ptr p_ptr, const Control
 namespace pgbart {
 
 IntVector_Ptr TreeMCMC::get_nodes_not_in_subtree(const int node_id) {
-  IntVector_ptr reqd_nodes_ptr(new IntVector());
+  IntVector_ptr reqd_nodes_ptr = make_shared<IntVector>();
   IntVector all_nodes(this->tree_ptr->leaf_node_ids);
   all_nodes.insert(all_nodes.end(), this->tree_ptr->non_leaf_node_ids.begin(),
     this->tree_ptr->non_leaf_node_ids.end());
@@ -136,7 +137,7 @@ IntVector_Ptr TreeMCMC::get_nodes_not_in_subtree(const int node_id) {
 
 IntVector_Ptr TreeMCMC::get_nodes_subtree(const int node_id) {
   // NOTE: current node_id is included in nodes_subtree as well
-  IntVector_Ptr node_list_ptr(new IntVector());
+  IntVector_Ptr node_list_ptr = make_shared<IntVector>();
   IntVector expand {node_id};
   while (expand.size() > 0) {
     const int node = expand.back();
@@ -184,8 +185,8 @@ double TreeMCMC::compute_log_inv_acc_p(const int node_id, const Param& param, co
   const Data& train_data) {
   // acc for Grow except for corrections to both_children_terminal and grow_nodes list
   double logprior_children = 0;
-  const int left = this->tree_ptr->getLeftNodeID(node_id)
-  const int right = this->tree_ptr->getRightNodeID(node_id)
+  const int left = this->tree_ptr->getLeftNodeID(node_id);
+  const int right = this->tree_ptr->getRightNodeID(node_id);
 
   if (!no_valid_split_exists(data, cache, this->train_ids[left])) {
     logprior_children += log(compute_not_split_prob(this->tree_ptr, left, param));
