@@ -2,6 +2,8 @@
 #define PGBART_PMCMC_HPP
 
 #include <map>
+#include <vector>
+#include <iostream>
 
 #include "pgbart/include/data.hpp"
 #include "pgbart/include/control.hpp"
@@ -38,7 +40,8 @@ tuple<Particle_Ptr, bool> run_mcmc_single_tree(Particle_Ptr p_ptr, const Control
 namespace pgbart {
 class TreeMCMC: public State {
 private:
-  TupleVector inner_pc_paires;
+  // TupleVector inner_pc_paires;
+  std::vector<NodePair> inner_pc_paires;
   IntVector both_children_terminal;
 
   map<UINT, SplitInfo> node_info_new;

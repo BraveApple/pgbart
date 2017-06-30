@@ -60,7 +60,7 @@ typedef std::vector<bool> BoolVector;
 typedef std::vector<double> DoubleVector;
 typedef std::vector<UINT> IntVector;
 typedef std::vector<std::string> StrVector;
-typedef std::vector<std::tuple> TupleVector;
+// typedef std::vector<std::tuple> TupleVector;
 typedef std::shared_ptr<IntVector> IntVector_Ptr;
 typedef std::shared_ptr<DoubleVector> DoubleVector_Ptr;
 typedef std::shared_ptr<SplitInfo> SplitInfo_Ptr;
@@ -118,10 +118,10 @@ struct SplitInfo {
     return true;
   }
 
-  void operator=(const SplitInfo& right) {
-    this->feat_id_chosen = right.feat_id_chosen;
-    this->split_chosen = right.split_chosen;
-    this->idx_split_global = right.idx_split_global;
+  void operator=(const SplitInfo& other) {
+    this->feat_id_chosen = other.feat_id_chosen;
+    this->split_chosen = other.split_chosen;
+    this->idx_split_global = other.idx_split_global;
   }
 };
 
@@ -200,6 +200,21 @@ struct Cache {
 };
 
 enum MoveType {GROW=0, PRUNE, CHANGE, SWAP};
+
+struct NodePair {
+  UINT parent;
+  UINT child;
+
+  NodePair(): parent(0U), child(0U){}
+  NodePair(UINT parent, UINT child): parent(parent), child(child){}
+  bool operator==(const NodePair& other) { 
+    return this->parent == other.parent && this->child == other.child;
+  }
+  void operator=(const NodePair& other) {
+    this->parent = other.parent;
+    this->child = other.child;
+  }
+};
 
 } // namespace pgbart
 

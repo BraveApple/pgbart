@@ -289,7 +289,8 @@ bool TreeMCMC::prune(const Data& train_data, const Control& control, const Param
     math::delete_element<int>(this->both_children_terminal, node_id);
     parent = this->tree_ptr->getParentNodeID(node_id);
     if (node_id != 0 && this->tree_ptr->isNonLeafNode(node_id)) {
-      math::delete_element<tuple<int, int>>(this->inner_pc_pairs, make_tuple(parent, node_id));
+      // math::delete_element<tuple<int, int>>(this->inner_pc_pairs, make_tuple(parent, node_id));
+      math::delete_element<NodePair>(this->inner_pc_pairs, NotePair(parent, node_id));
     }
     if (node_id != 0) {
       const int sibling_node_id = this->tree_ptr->getSiblingNodeID(node_id);
