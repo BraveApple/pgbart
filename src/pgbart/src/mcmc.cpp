@@ -128,7 +128,7 @@ IntVector_Ptr TreeMCMC::get_nodes_not_in_subtree(const int node_id) {
   IntVector_Ptr subtree_ptr = this->get_nodes_subtree(node_id);
   for (auto it = all_nodes.begin(); it != all_nodes.end(); it++) {
     auto iter = std::find(subtree_ptr->begin(), subtree_ptr->end(), *it);
-    if (iter == subtree_ptr.end()) {
+    if (iter == subtree_ptr.end()) { // Not found node in subtree
       reqd_nodes_ptr->push_back(*it);
     }
   }
