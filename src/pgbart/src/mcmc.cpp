@@ -114,6 +114,9 @@ tuple<Particle_Ptr, bool> run_mcmc_single_tree(Particle_Ptr p_ptr, const Control
 
 } // namespace pgbart
 
+/*****************************
+********* TreeMCMC ***********
+******************************/
 namespace pgbart {
 
 IntVector_Ptr TreeMCMC::get_nodes_not_in_subtree(const int node_id) {
