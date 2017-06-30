@@ -123,6 +123,7 @@ struct SplitInfo {
     this->split_chosen = other.split_chosen;
     this->idx_split_global = other.idx_split_global;
   }
+
 };
 
 struct DimensionInfo {

@@ -1,6 +1,9 @@
 #ifndef PGBART_STATE_HPP
 #define PGBART_STATE_HPP
 
+#include <map>
+#include <tuple>
+
 #include "pgbart/include/tree.hpp"
 #include "pgbart/include/config.hpp"
 #include "pgbart/include/random.hpp"

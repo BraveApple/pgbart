@@ -1,16 +1,17 @@
 #ifndef PGBART_MATH_HPP
 #define PGBART_MATH_HPP
 
-#include <pgbart/include/config.hpp>
-#include <pgbart/include/random.hpp>
 #include <vector>
 #include <sstream>
-#include <pgbart/include/compare.hpp>
 #include <ctime>
 #include <random>
 #include <numeric>
 #include <string>
 #include <iostream>
+
+#include "pgbart/include/config.hpp"
+#include "pgbart/include/random.hpp"
+#include "pgbart/include/compare.hpp"
 
 /**************************************
 File name : data.hpp
@@ -35,6 +36,7 @@ Function List : compare_point(const Point<T>& a, const Point<T>& b)
 
 // define some matrix algorithm about Matrix
 namespace pgbart {
+
 template<typename T>
 struct Matrix {
   std::vector<T> elements;
@@ -323,6 +325,8 @@ struct Matrix {
 
 } // namesapce pgbart
 
+// ***************************************************************************
+// ***************************************************************************
 
 // define some algorithm about std::vector in STL
 namespace pgbart {

@@ -120,6 +120,7 @@ tuple<Particle_Ptr, bool> run_mcmc_single_tree(Particle_Ptr p_ptr, const Control
 ***********************************************************************************/
 namespace pgbart {
 
+// Get non_subtree of node_id
 IntVector_Ptr TreeMCMC::get_nodes_not_in_subtree(const int node_id) {
   IntVector_ptr reqd_nodes_ptr = make_shared<IntVector>();
   IntVector all_nodes(this->tree_ptr->leaf_node_ids);
@@ -135,10 +136,11 @@ IntVector_Ptr TreeMCMC::get_nodes_not_in_subtree(const int node_id) {
   return reqd_nodes_ptr;
 }
 
+// Get subtree of node_id
 IntVector_Ptr TreeMCMC::get_nodes_subtree(const int node_id) {
   // NOTE: current node_id is included in nodes_subtree as well
   IntVector_Ptr node_list_ptr = make_shared<IntVector>();
-  IntVector expand {node_id};
+  IntVector expand {node_id}; // C++11 vector initialization type
   while (expand.size() > 0) {
     const int node = expand.back();
     expand.pop_back();
@@ -158,14 +160,16 @@ double TreeMCMC::compute_log_acc_g(const int node_id, const Param& param, const 
   const Cache& cache, const Control& control, const Data& data, const IntVector& grow_nodes) {
   // Effect of do_not_split dose not matter for node_id since it has chidren
   double logprior_children = 0.0;
-  const int left = this->tree_ptr->getLeftNodeID(node_id);
-  const int right = this->tree_ptr->getRightNodeID(node_id);
+  const int left_id = this->tree_ptr->getLeftNodeID(node_id);
+  const int right_id = this->tree_ptr->getRightNodeID(node_id);
 
   if (!no_valid_split_exists(data, cache, train_ids_left)) {
-    logprior_children += log(compute_not_split_prob(this->tree_ptr, left, param));
+    // Left child node will stop splitting, so we compute log-probability of non-split
+    logprior_children += log(compute_not_split_prob(this->tree_ptr, left_id, param));
   }
   if (!no_valid_split_exists(data, cache, train_ids_right)) {
-    logprior_children += log(compute_not_split_prob(this->tree_ptr, right, param));
+    // Right child node will stop splitting, so we compute log-probability of non-split
+    logprior_children += log(compute_not_split_prob(this->tree_ptr, right_id, param));
   }
 
   const double log_acc_prior = log(compute_split_prob(this->tree_ptr, node_id, param))

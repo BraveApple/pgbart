@@ -1,6 +1,8 @@
 #ifndef PGBART_TREE_HPP
 #define PGBART_TREE_HPP
 
+#include <memory>
+
 #include "pgbart/include/node.hpp"
 #include "pgbart/include/config.hpp"
 #include "pgbart/include/data.hpp"
