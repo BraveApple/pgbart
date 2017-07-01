@@ -162,15 +162,15 @@ double TreeMCMC::compute_log_acc_g(const int node_id, const Param& param, const 
   const int right = this->tree_ptr->getRightNodeID(node_id);
 
   if (!no_valid_split_exists(data, cache, train_ids_left)) {
-    logprior_children += log(compute_not_split_prob(this->tree_ptr, left, param));
+    logprior_children += std::log(compute_not_split_prob(this->tree_ptr, left, param));
   }
   if (!no_valid_split_exists(data, cache, train_ids_right)) {
-    logprior_children += log(compute_not_split_prob(this->tree_ptr, right, param));
+    logprior_children += std::log(compute_not_split_prob(this->tree_ptr, right, param));
   }
 
-  const double log_acc_prior = log(compute_split_prob(this->tree_ptr, node_id, param))
-    - log(compute_not_split_prob(this->tree_ptr, node_id, param))
-    - log(len_both_children_terminal) + log(grow_nodes.size()) + logprior_children;
+  const double log_acc_prior = std::log(compute_split_prob(this->tree_ptr, node_id, param))
+    - std::log(compute_not_split_prob(this->tree_ptr, node_id, param))
+    - std::log(len_both_children_terminal) + std::log(grow_nodes.size()) + logprior_children;
   const double log_acc_loglik = loglik - this->loglik[node_id];
   const double log_acc = log_acc_prior + log_acc_loglik;
 
@@ -189,11 +189,11 @@ double TreeMCMC::compute_log_inv_acc_p(const int node_id, const Param& param, co
   const int right = this->tree_ptr->getRightNodeID(node_id);
 
   if (!no_valid_split_exists(data, cache, this->train_ids[left])) {
-    logprior_children += log(compute_not_split_prob(this->tree_ptr, left, param));
+    logprior_children += std::log(compute_not_split_prob(this->tree_ptr, left, param));
   }
 
   if (!no_valid_split_exists(data, cache, this->train_ids[right])) {
-    logprior_children += log(compute_not_split_prob(this->tree_ptr, right, param));
+    logprior_children += std::log(compute_not_split_prob(this->tree_ptr, right, param));
   }
 
   if (compare_if_zero(logprior_children - this->log_prior[left] - this->log_prior[right])) {
@@ -201,9 +201,9 @@ double TreeMCMC::compute_log_inv_acc_p(const int node_id, const Param& param, co
     exit(1);
   }
 
-  const double log_inv_acc_prior = log(compute_split_prob(this->tree_ptr, node_id, param))
-    - log(compute_not_split_prob(this->tree_ptr, node_id, param))
-    - log(len_both_children_terminal) + log(grow_nodes.size()) + logprior_children;
+  const double log_inv_acc_prior = std::log(compute_split_prob(this->tree_ptr, node_id, param))
+    - std::log(compute_not_split_prob(this->tree_ptr, node_id, param))
+    - std::log(len_both_children_terminal) + std::log(grow_nodes.size()) + logprior_children;
   const double log_inv_acc_loglik = loglik - this->loglik[node_id];
   const double log_inv_acc = log_inv_acc_loglik + log_inv_acc_prior;
 
@@ -239,7 +239,7 @@ bool TreeMCMC::grow(const Data& train_data, const Control& control, const Param&
   }
   const double log_acc = this->compute_log_acc_g(node_id, param, len_both_children_terminal_new, 
     loglik, train_ids_left, train_ids_right, cache, control, train_data, grow_nodes);
-  const double log_r = log(simulate_continuous_uniform_distribution(0, 1));
+  const double log_r = std::log(simulate_continuous_uniform_distribution(0, 1));
   if (log_r <= log_acc) {
     this->update_left_right_statistics(node_id, logprior_nodeid, split_info, cache_temp, control, 
       train_ids_left, train_ids_right, train_data, cache, param);
@@ -281,13 +281,13 @@ bool TreeMCMC::prune(const Data& train_data, const Control& control, const Param
   }
   const double log_acc = -1.0 * this->compute_log_inv_acc_p(node_id, param, len_both_children_terminal,
     loglik, grow_nodes_temp, cache, control, train_data);
-  const double log_r = log(simulate_continuous_uniform_distribution(0, 1));
+  const double log_r = std::log(simulate_continuous_uniform_distribution(0, 1));
   if (log_r <= log_acc) {
     this->remove_leaf_node_statistics(left);
     this->remove_leaf_node_statistics(right);
     this->tree_ptr->addLeafNode(node_id);
     this->tree_ptr->removeNonLeafNode(node_id);
-    this->log_prior[node_id] = log(compute_not_split_prob(this->tree_ptr, node_id, param));
+    this->log_prior[node_id] = std::log(compute_not_split_prob(this->tree_ptr, node_id, param));
     // OK to set logprior as above since we know that a valid split exists
     // MCMC specific data structure updates
     math::delete_element<int>(this->both_children_terminal, node_id);
@@ -335,7 +335,7 @@ bool TreeMCMC::change(const Data& train_data, const Control& control, const Para
   // log_acc_temp, loglik_diff, logprior_diff = self.compute_log_acc_cs(nodes_subtree, node_id)
   const double log_acc = log_acc_temp = log_acc_temp + this->log_prior[node_id];
     - this->logprior_new[node_id];
-  const double log_r = log(simulate_continuous_uniform_distribution(0, 1));
+  const double log_r = std::log(simulate_continuous_uniform_distribution(0, 1));
   if (log_r <= log_acc) {
     this->node_info[node_id] = this->node_info_new[node_id];
     // self.update_subtree(node_id, nodes_subtree, settings)
@@ -365,7 +365,7 @@ bool TreeMCMC::swap(const Data& train_data, const Control& control, const Param&
   this->evaluate_new_subtree(train_data, node_id, param, nodes_subtree_ptr, cache);
   double log_acc = 0; double loglik_diff = 0; logprior_diff = 0;
   // log_acc, loglik_diff, logprior_diff = self.compute_log_acc_cs(nodes_subtree, node_id)
-  const double log_r = log(simulate_continuous_uniform_distribution(0, 1));
+  const double log_r = std::log(simulate_continuous_uniform_distribution(0, 1));
   if (log_r <= log_acc) {
     this->node_info[node_id] = this->node_info_new[node_id];
     this->node_info[child_id] = this->node_info_new[child_id];
@@ -409,24 +409,24 @@ tuple<bool, MoveType> TreeMCMC::sample(const Data& train_data, const Control& co
 
 bool TreeMCMC::check_if_same(const double log_acc, const double loglik_diff, const double logprior_diff){
 	double loglik_diff_2, logprior_diff_2, log_acc_2, node_id;
-	UINT leaf_legnth = this.tree_ptr->leaf_node_ids.size();
+	UINT leaf_legnth = this->tree_ptr->leaf_node_ids.size();
 	double sum1 = 0, sum2 = 0;
-	for (int i = 0; i < leaf_length; i++){
-		UINT node_id = this.tree_ptr->leaf_node_ids[i];
-		sum1 += this.loglik_new[node_id];
-		sum2 += this.loglik[node_id];
+	for (UINT i = 0; i < leaf_length; i++){
+		UINT node_id = this->tree_ptr->leaf_node_ids[i];
+		sum1 += this->loglik_new[node_id];
+		sum2 += this->loglik[node_id];
 	}
 	loglik_diff_2 = sum1 - sum2;
 	map<UINT, double>::iterator it;
-	it = this.logprior_new.begin();
+	it = this->logprior_new.begin();
 	sum1 = 0;
 	sum2 = 0;
-	while (it != this.logprior_new.end()){
+	while (it != this->logprior_new.end()){
 		sum1 += it.second;
 		it++;
 	}
-	it = this.logprior.begin();
-	while (it != this.logprior.end()){
+	it = this->logprior.begin();
+	while (it != this->logprior.end()){
 		sum2 += it.second;
 		it++;
 	}
@@ -451,12 +451,12 @@ tuple<double, double, double> TreeMCMC::compute_log_acc_cs(const IntVector& node
 	double sum_loglik_old = 0, sum_loglik_new = 0, sum_prior_old = 0, sum_prior_new = 0;
 	for (UINT i = 0; i < subtree_length; i++){
 		UINT node_id = nodes_subtree[i];
-		if (check_if_included(this.tree_ptr->leaf_node_ids, node_id)){
-			sum_loglik_old += this.loglik[node_id];
-			sum_loglik_new += this.loglik_new[node_id];
+		if (check_if_included(this->tree_ptr->leaf_node_ids, node_id)){
+			sum_loglik_old += this->loglik[node_id];
+			sum_loglik_new += this->loglik_new[node_id];
 		}
-		logprior_old += this.logprior[node_id];
-		logprior_new += this.logprior_new[node_id];
+		logprior_old += this->logprior[node_id];
+		logprior_new += this->logprior_new[node_id];
 	}
 	loglik_diff = loglik_new - loglik_old;
 	logprior_diff = logprior_new - logprior_old;
@@ -465,72 +465,80 @@ tuple<double, double, double> TreeMCMC::compute_log_acc_cs(const IntVector& node
 }
 
 void TreeMCMC::create_new_statistics(const IntVector& nodes_subtree, const IntVector& nodes_not_in_subtree){
-	this.node_info_new = this.node_info;
+	this->node_info_new = this->node_info;
 	UINT not_length = nodes_not_in_subtree.size();
 	for (UINT i = 0; i < not_length; i++){
 		UINT node_id = nodes_not_in_subtree[i];
-		this.loglik_new[node_id] = this.loglik[node_id];
-		this.logprior_new[node_id] = this.logprior[node_id];
-		this.train_ids_new[node_id] = this.train_ids[node_id];
-		this.sum_y_new[node_id] = this.sum_y[node_id];
-		this.sum_y2_new[node_id] = this.sum_y2[node_id];
-		this.n_points_new[node_id] = this.n_points[node_id];
-		this.mu_mean_post_new[node_id] = this.mu_mean_post[node_id];
-		this.mu_prec_post_new[node_id] = this.mu_prec_post[node_id];
+		this->loglik_new[node_id] = this->loglik[node_id];
+		this->logprior_new[node_id] = this->logprior[node_id];
+		this->train_ids_new[node_id] = this->train_ids[node_id];
+		this->sum_y_new[node_id] = this->sum_y[node_id];
+		this->sum_y2_new[node_id] = this->sum_y2[node_id];
+		this->n_points_new[node_id] = this->n_points[node_id];
+		this->mu_mean_post_new[node_id] = this->mu_mean_post[node_id];
+		this->mu_prec_post_new[node_id] = this->mu_prec_post[node_id];
 	}
 	UINT in_length = nodes_subtree.size();
 	for (UINT i = 0; i < in_length; i++){
 		UINT node_id = nodes_subtree[i];
-		this.loglik_new[node_id] = -INF;
-		this.logprior_new[node_id] = -INF;
-		this.train_ids_new[node_id].clear();
-		this.sum_y_new[node_id] = 0;
-		this.sum_y2_new[node_id] = 0;
-		this.n_points_new[node_id] = 0;
-		this.mu_mean_post_new[node_id] = this.mu_mean_post[node_id];
-		this.mu_prec_post_new[node_id] = this.mu_prec_post[node_id];
+		this->loglik_new[node_id] = -INF;
+		this->logprior_new[node_id] = -INF;
+		this->train_ids_new[node_id].clear();
+		this->sum_y_new[node_id] = 0;
+		this->sum_y2_new[node_id] = 0;
+		this->n_points_new[node_id] = 0;
+		this->mu_mean_post_new[node_id] = this->mu_mean_post[node_id];
+		this->mu_prec_post_new[node_id] = this->mu_prec_post[node_id];
 	}
 }
 
-void TreeMCMC::evaluate_new_subtree(const Data& data, const UINT node_id_start, const Param& param, const IntVector& nodes_subtree, const Cache& cache, const Control& control){
-	for (UINT i : this.train_ids[node_id_start]){
-		IntVector x_ = data.x(i, ":");
-		double y_ = data.y_original[i];
+void TreeMCMC::evaluate_new_subtree(const Data& train_data, const UINT node_id_start, const Param& param, const IntVector& nodes_subtree, const Cache& cache, const Control& control){
+	for (UINT i : this->train_ids[node_id_start]){
+		IntVector x_ = train_data.x(i, ":");
+		double y_ = train_data.y_original[i];
 		UINT node_id = node_id_start;
 		while (true){
-			this.sum_y_new[node_id] += y_;
-			this.sum_y2_new[node_id] += y_ * y_;
-			this.n_points_new[node_id] += 1;
-			this.train_ids_new[node_id].push_back(i);
-			if (check_if_included(this.tree_ptr->leaf_node_ids, node_id))
+			this->sum_y_new[node_id] += y_;
+			this->sum_y2_new[node_id] += y_ * y_;
+			this->n_points_new[node_id] += 1;
+			this->train_ids_new[node_id].push_back(i);
+			if (check_if_included(this->tree_ptr->leaf_node_ids, node_id))
 				break;
 			UINT left = 2 * node_id + 1;
 			UINT right = left + 1;
-			UINT feat_id = this.node_info_new[node_id].feat_id_chosen;
-			double split = this.node_info_new[node_id].split_chosen;
-			UINT idx_split_global = this.node_info_new[node_id].idx_split_global;
+			UINT feat_id = this->node_info_new[node_id].feat_id_chosen;
+			double split = this->node_info_new[node_id].split_chosen;
+			UINT idx_split_global = this->node_info_new[node_id].idx_split_global;
 			if (x_[feat_id] <= split)
 				node_id = left;
 			else
 				node_id = right;
 		}
 	}
+
+	CacheTemp_Ptr cache_temp_ptr(new CacheTemp());
 	for (UINT node_id : nodes_subtree){
-		this.loglik_new[node_id] = -INF;
-		if (this.n_points_new[node_id] > 0){
-			std::tie(this.loglik_new[node_id], this.mu_mean_post[node_id], this.mu_prec_post[node_id]) =
-				compute_normal_normalizer(this.sum_y_new[node_id], this.sum_y2_new[node_id], this.n_points_new[node_id], param, cache);
+		this->loglik_new[node_id] = -INF;
+		if (this->n_points_new[node_id] > 0){
+			
+			cache_temp_ptr->n_points = this->n_points_new[node_id];
+			cache_temp_ptr->sum_y = this->sum_y_new[node_id];
+			cache_temp_ptr->sum_y2 = this->sum_y2_new[node_id];
+			compute_normal_normalizer(param, cache, *cache_temp_ptr, "parent");
+			this->loglik_new[node_id] = cache_temp_ptr->loglik;
+			this->mu_mean_post[node_id] = cache_temp_ptr->mu_mean_post;
+			this->mu_prec_post[node_id] = cache_temp_ptr->mu_prec_post;
 		}
-		if (check_if_included(this.tree_ptr->leaf_node_ids, node_id)){
-			if (stop_split(this.train_ids_new[node_id], control, data, cache)){
-				this.logprior_new[node_id] = 0;
+		if (check_if_included(this->tree_ptr->leaf_node_ids, node_id)){
+			if (stop_split(this->train_ids_new[node_id], control, train_data, cache)){
+				this->logprior_new[node_id] = 0;
 			}
 			else{
-				this.logprior_new[node_id] = log(this.compute_pnosplit(node_id, param));
+				this->logprior_new[node_id] = std::log(this->compute_not_split_prob(this->tree_ptr, node_id, param));
 			}
 		}
 		else{
-			this.recompute_prob_split(data, param, control, cache, node_id);
+			this->recompute_prob_split(data, param, control, cache, node_id);
 		}
 	}
 }
@@ -539,18 +547,81 @@ void TreeMCMC::update_subtree(const IntVector& nodes_subtree){
 	UINT subtree_length = nodes_subtree.size();
 	for (UINT i = 0; i < subtree_length; i++){
 		UINT node_id = nodes_subtree[i];
-		this.loglik[node_id] = this.loglok_new[node_id];
-		this.logprior[node_id] = this.logprior_new[node_id];
-		this.train_ids[node_id] = this.train_ids_new[node_id];
-		this.sum_y[node_id] = this.sum_y_new[node_id];
-		this.sum_y2[node_id] = this.sum_y2_new[node_id];
-		this.n_points[node_id] = this.n_points_new[node_id];
-		this.mu_mean_post[node_id] = this.mu_mean_post_new[node_id];
-		this.mu_prec_post[node_id] = this.mu_prec_post_new[node_id];
+		this->loglik[node_id] = this->loglok_new[node_id];
+		this->logprior[node_id] = this->logprior_new[node_id];
+		this->train_ids[node_id] = this->train_ids_new[node_id];
+		this->sum_y[node_id] = this->sum_y_new[node_id];
+		this->sum_y2[node_id] = this->sum_y2_new[node_id];
+		this->n_points[node_id] = this->n_points_new[node_id];
+		this->mu_mean_post[node_id] = this->mu_mean_post_new[node_id];
+		this->mu_prec_post[node_id] = this->mu_prec_post_new[node_id];
 	}
 }
 
+void TreeMCMC::recompute_prob_split(const Data& train_data, const Param& param, const Control& control, const Cache& cache, const UINT node_id) {
+	const IntVector& train_ids = this->train_ids_new[node_id];
+	if (stop_split(train_ids, control, train_data, cache)) {
+		this->logprior_new[node_id] = -INF;
+	}
+	else {
+		const SplitInfo&  n_info = this->node_info_new[node_id];
+		UINT feat_id_chosen = n_info.feat_id_chosen;
+		double split_chosen = n_info.split_chosen;
+		UINT idx_split_global = n_info.idx_split_global;
 
+		IntVector_Ptr feat_id_valid_ptr;
+		DoubleVector_Ptr score_feat_ptr;
+		map<UINT, DimensionInfo_Ptr> feat_split_info;
+		bool split_not_supported;
+
+		tie(feat_id_valid_ptr, score_feat_ptr, feat_split_info, split_not_supported) =
+			find_valid_dimensions(train_data, cache, train_ids, control);
+
+		if (!check_if_included(*feat_id_valid_ptr, feat_id_chosen)) {
+			this->logprior_new[node_id] = -INF;
+		}
+		else {
+			DoubleVector log_prob_feat;
+			double tmp_sum = std::log(sum(*score_feat_ptr));
+			for (double ele : *score_feat_ptr) {
+				log_prob_feat.push_back(std::log(ele) - tmp_sum);
+			}
+			DimensionInfo_Ptr d_info = feat_split_info[feat_id_chosen];
+			UINT idx_min = d_info->idx_min;
+			UINT idx_max = d_info->idx_max;
+			double x_min = d_info->x_min;
+			double x_max = d_info->x_max;
+			DoubleVector& feat_score_cumsum_prior_current = d_info->feat_score_cumsum_prior_current;
+			if (split_chosen <= x_min || split_chosen >= x_max)
+				this->logprior_new[node_id] = -INF;
+			else {
+				double z_prior = feat_score_cumsum_prior_current[idx_max] - feat_score_cumsum_prior_current[idx_min];
+				DoubleVector prob_split_prior;
+				double tmp;
+				double offset = feat_score_cumsum_prior_current[idx_min];
+				for (UINT i = idx_min; i <= idx_max; i++) {
+					tmp = (feat_score_cumsum_prior_current[i] - offset) / z_prior;
+					prob_split_prior.push_back(tmp);
+				}
+				UINT idx_split_chosen = idx_split_global - idx_min - 1;
+				double logprior_nodeid_tau = std::log(prob_split_prior[idx_split_chosen]);
+				double log_psplit = std::log(this->compute_split_prob(this->tree_ptr, node_id, param));
+				this->logprior_new[node_id] = log_psplit + logprior_nodeid_tau + log_prob_feat[feat_id_chosen];
+				if (control.verbose >= 3) {
+					std::cout << "3 terms in recompute for node_id = " << node_id << "; "
+						<< log_psplit << "; " << logprior_nodeid_tau << "; " << log_prob_feat[feat_id_chosen] << std::endl;
+					std::cout << "feat_id = " << feat_id_chosen << ", idx_split_chosen = "
+						<< idx_split_chosen << ", split_chosen = " << split_chosen << std::endl;
+					std::cout << "log prob_split_prior = ";
+					for (double prob : prob_split_prior) {
+						std::cout << std::log(prob) << " ";
+					}
+					std::cout << std::endl;
+				}
+			}
+		}
+	}
+}
 
 
 

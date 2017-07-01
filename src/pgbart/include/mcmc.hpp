@@ -88,11 +88,11 @@ public:
 
   void create_new_statistics(const IntVector& nodes_subtree, const IntVector& nodes_not_in_subtree);
 
-  void evaluate_new_subtree(const Data& data, const UINT node_id_start, const Param& param, const IntVector& nodes_subtree, const Cache& cache, const Control& control);
+  void evaluate_new_subtree(const Data& train_data, const UINT node_id_start, const Param& param, const IntVector& nodes_subtree, const Cache& cache, const Control& control);
 
   void update_subtree(const IntVector& nodes_subtree);
 
-  
+  void recompute_prob_split(const Data& train_data, const Param& param, const Control& control, const Cache& cache, const UINT node_id);
 
 };
 
