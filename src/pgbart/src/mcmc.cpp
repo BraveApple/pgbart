@@ -95,26 +95,6 @@ bool Pmcmc::sample(const Data& data, const Control& control, const Param& param,
 
 } // namesapce pgbart
 
-namespace pgbart {
-Pmcmc_Ptr init_tree_mcmc(const Data& data_train, const Control& control, const Param& param,
-  const Cache& cache, const CacheTemp& cache_temp) {
-  
-  Pmcmc_Ptr pmcmc_ptr;
-  pmcmc_ptr = Pmcmc_Ptr(new Pmcmc(data_train, control, param, cache, cache_temp));
-  return pmcmc_ptr;
-}
-
-tuple<Particle_Ptr, bool> run_mcmc_single_tree(Particle_Ptr p_ptr, const Control& control, const Data& data_train,
-  const Param& param, const Cache& cache, bool change, const CacheTemp& cache_temp, Pmcmc_Ptr pmcmc_ptr) {
-  // starting mcmc
-  change = pmcmc_ptr->sample(data_train, control, param, cache, cache_temp);
-  // update the tree from the mcmc_object
-  p_ptr = pmcmc_ptr->p_ptr;
-  return make_tuple(p_ptr, change);
-}
-
-} // namespace pgbart
-
 /*****************************
 ********* TreeMCMC ***********
 ******************************/
@@ -623,9 +603,24 @@ void TreeMCMC::recompute_prob_split(const Data& train_data, const Param& param, 
 	}
 }
 
-
-
-
 } // namesapce pgbart
 
-    
+namespace pgbart {
+Pmcmc_Ptr init_tree_mcmc(const Data& data_train, const Control& control, const Param& param,
+  const Cache& cache, const CacheTemp& cache_temp) {
+  
+  Pmcmc_Ptr pmcmc_ptr;
+  pmcmc_ptr = Pmcmc_Ptr(new Pmcmc(data_train, control, param, cache, cache_temp));
+  return pmcmc_ptr;
+}
+
+tuple<Particle_Ptr, bool> run_mcmc_single_tree(Particle_Ptr p_ptr, const Control& control, const Data& data_train,
+  const Param& param, const Cache& cache, bool change, const CacheTemp& cache_temp, Pmcmc_Ptr pmcmc_ptr) {
+  // starting mcmc
+  change = pmcmc_ptr->sample(data_train, control, param, cache, cache_temp);
+  // update the tree from the mcmc_object
+  p_ptr = pmcmc_ptr->p_ptr;
+  return make_tuple(p_ptr, change);
+}
+
+} // namespace pgbart    
