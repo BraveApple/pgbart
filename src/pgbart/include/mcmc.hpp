@@ -31,11 +31,14 @@ public:
 } // namesapce pgbart
 
 namespace pgbart{
+
 Pmcmc_Ptr init_particle_mcmc(const Data& data_train, const Control& control, const Param& param,
   const Cache& cache, const CacheTemp& cache_temp);
-tuple<Particle_Ptr, bool> run_particle_mcmc_single_tree(Particle_Ptr p_ptr, const Control& control, 
+
+tuple<Particle_Ptr, bool> run_particle_mcmc_single_tree(const Control& control, 
   const Data& data_train, const Param& param, const Cache& cache, bool change, 
   const CacheTemp& cache_temp, Pmcmc_Ptr pmcmc_ptr);
+
 } // namespace pgbart
 
 namespace pgbart {
