@@ -1,8 +1,8 @@
-#include "pgbart/include/mcmc.hpp"
-
 #include <iostream>
 #include <algorithm>
 #include <memory>
+
+#include "pgbart/include/mcmc.hpp"
 
 using namespace pgbart::math;
 
