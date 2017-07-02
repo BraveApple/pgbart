@@ -100,6 +100,23 @@ bool Pmcmc::sample(const Data& data, const Control& control, const Param& param,
 ******************************/
 namespace pgbart {
 
+void TreeMCMC::TreeMCMC(const IntVector& train_ids, const Param& param, const Control& control, 
+  const CacheTemp& cache_temp): State(train_ids, param, cache_temp){
+
+  this->inner_pc_paires.clear(); // list of nodes where both parent/child are non-terminal
+  this->both_children_terminal.clear();
+
+  this->node_info_new.clear();
+  this->loglik_new.clear();
+  this->logprior_new.clear();
+  this->train_ids_new.clear();
+  this->sum_y_new.clear();
+  this->sum_y2_new.clear();
+  this->n_points_new.clear();
+  this->mu_mean_post_new.clear();
+  this->mu_prec_post_new.clear();
+}
+
 IntVector_Ptr TreeMCMC::get_nodes_not_in_subtree(const int node_id) {
   IntVector_ptr reqd_nodes_ptr = make_shared<IntVector>();
   IntVector all_nodes(this->tree_ptr->leaf_node_ids);
@@ -273,7 +290,6 @@ bool TreeMCMC::prune(const Data& train_data, const Control& control, const Param
     math::delete_element<int>(this->both_children_terminal, node_id);
     parent = this->tree_ptr->getParentNodeID(node_id);
     if (node_id != 0 && this->tree_ptr->isNonLeafNode(node_id)) {
-      // math::delete_element<tuple<int, int>>(this->inner_pc_pairs, make_tuple(parent, node_id));
       math::delete_element<NodePair>(this->inner_pc_pairs, NotePair(parent, node_id));
     }
     if (node_id != 0) {
@@ -305,20 +321,18 @@ bool TreeMCMC::change(const Data& train_data, const Control& control, const Para
   }
   IntVector_Ptr nodes_subtree_ptr = this->get_nodes_subtree(node_id);
   IntVector_Ptr nodes_not_in_subtree_ptr = this->get_nodes_not_in_subtree(node_id);
-  // self.create_new_statistics(nodes_subtree, nodes_not_in_subtree, node_id, settings)
-  this->create_new_statistics(nodes_subtree_ptr, nodes_not_in_subtree_ptr, node_id);
+  this->create_new_statistics(nodes_subtree_ptr, nodes_not_in_subtree_ptr);
   this->node_info_new[node_id] = this->node_info[node_id];
-  // self.evaluate_new_subtree(data, node_id, param, nodes_subtree, cache, settings)
-  this->evaluate_new_subtree(train_data, node_id, param, nodes_subtree_ptr, cache);
+  this->evaluate_new_subtree(train_data, node_id, param, nodes_subtree, cache, control);
   // log_acc will be modified below
   double log_acc_temp = 0; double loglik_diff = 0; logprior_diff = 0;
-  // log_acc_temp, loglik_diff, logprior_diff = self.compute_log_acc_cs(nodes_subtree, node_id)
+  tie(log_acc_temp, loglik_diff, logprior_diff) = this->compute_log_acc_cs(nodes_subtree);
   const double log_acc = log_acc_temp = log_acc_temp + this->log_prior[node_id];
     - this->logprior_new[node_id];
   const double log_r = std::log(simulate_continuous_uniform_distribution(0, 1));
   if (log_r <= log_acc) {
     this->node_info[node_id] = this->node_info_new[node_id];
-    // self.update_subtree(node_id, nodes_subtree, settings)
+    this->update_subtree(nodes_subtree);
     change = true;
   } else {
     change = false;
@@ -337,19 +351,17 @@ bool TreeMCMC::swap(const Data& train_data, const Control& control, const Param&
   tie(node_id, child_id) = this->inner_pc_pairs[id]; // (parent, child) pair
   IntVector_Ptr nodes_subtree_ptr = this->get_nodes_subtree(node_id);
   IntVector_Ptr nodes_not_in_subtree_ptr = this->get_nodes_not_in_subtree(node_id);
-  // self.create_new_statistics(nodes_subtree, nodes_not_in_subtree, node_id, settings)
-  this->create_new_statistics(nodes_subtree_ptr, nodes_not_in_subtree_ptr, node_id);
+  this->create_new_statistics(nodes_subtree_ptr, nodes_not_in_subtree_ptr);
   this->node_info_new[node_id] = this->node_info[node_id];
   this->node_info_new[node_id] = this->node_info[child_id];
-  // self.evaluate_new_subtree(data, node_id, param, nodes_subtree, cache, settings)
-  this->evaluate_new_subtree(train_data, node_id, param, nodes_subtree_ptr, cache);
+  this->evaluate_new_subtree(train_data, node_id, param, nodes_subtree, cache, control);
   double log_acc = 0; double loglik_diff = 0; logprior_diff = 0;
-  // log_acc, loglik_diff, logprior_diff = self.compute_log_acc_cs(nodes_subtree, node_id)
+  tie(log_acc_temp, loglik_diff, logprior_diff) = this->compute_log_acc_cs(nodes_subtree);
   const double log_r = std::log(simulate_continuous_uniform_distribution(0, 1));
   if (log_r <= log_acc) {
     this->node_info[node_id] = this->node_info_new[node_id];
     this->node_info[child_id] = this->node_info_new[child_id];
-    // self.update_subtree(node_id, nodes_subtree, settings)
+    this->update_subtree(nodes_subtree);
     change = true;
   } else {
     change =false;
