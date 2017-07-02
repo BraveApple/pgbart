@@ -23,9 +23,14 @@ private:
 public:
   Particle_Ptr p_ptr;
   Pmcmc();
-  Pmcmc(const Data& data, const Control& control, const Param& param, const Cache& cache, const CacheTemp& cache_temp);
-  bool update_p(Vec_Particle_Ptr particles_ptr, DoubleVector_Ptr log_weights_ptr, double& log_pd, const Control& control);
-  bool sample(const Data& data, const Control& control, const Param& param, const Cache& cache, const CacheTemp& cache_tmp);
+  Pmcmc(const Data& data, const Control& control, const Param& param, const Cache& cache, 
+    const CacheTemp& cache_temp);
+  
+  bool update_p(Vec_Particle_Ptr particles_ptr, DoubleVector_Ptr log_weights_ptr, double& log_pd, 
+    const Control& control);
+  
+  bool sample(const Data& data, const Control& control, const Param& param, const Cache& cache, 
+    const CacheTemp& cache_tmp);
 };
 
 } // namesapce pgbart
