@@ -31,13 +31,18 @@ public:
 } // namesapce pgbart
 
 namespace pgbart{
-Pmcmc_Ptr init_tree_pmcmc(const Data& data_train, const Control& control, const Param& param,
+Pmcmc_Ptr init_particle_mcmc(const Data& data_train, const Control& control, const Param& param,
   const Cache& cache, const CacheTemp& cache_temp);
-tuple<Particle_Ptr, bool> run_pmcmc_single_tree(Particle_Ptr p_ptr, const Control& control, const Data& data_train,
-  const Param& param, const Cache& cache, bool change, const CacheTemp& cache_temp, Pmcmc_Ptr pmcmc_ptr);
+tuple<Particle_Ptr, bool> run_particle_mcmc_single_tree(Particle_Ptr p_ptr, const Control& control, 
+  const Data& data_train, const Param& param, const Cache& cache, bool change, 
+  const CacheTemp& cache_temp, Pmcmc_Ptr pmcmc_ptr);
 } // namespace pgbart
 
 namespace pgbart {
+
+class TreeMCMC;
+typedef std::shared_ptr<TreeMCMC> TreeMCMC_Ptr;
+
 class TreeMCMC: public State {
 private:
   // TupleVector inner_pc_paires;
@@ -55,7 +60,7 @@ private:
   map<UINT, double> mu_prec_post_new;
 
 public:
-  void TreeMCMC(const IntVector& train_ids, const Param& param, 
+  TreeMCMC(const IntVector& train_ids, const Param& param, 
     const Control& control, const CacheTemp& cache_temp);
 
   IntVector_Ptr get_nodes_not_in_subtree(const int node_id);
@@ -82,8 +87,7 @@ public:
   bool swap(const Data& train_data, const Control& control, const Param& param, const Cache& cache,
     const IntVector& grow_nodes);
 
-  tuple<bool, MoveType> sample(const Data& train_data, const Control& control, const Param& param, 
-    const Cache& cache);
+  bool sample(const Data& train_data, const Control& control, const Param& param, const Cache& cache);
 
   bool check_if_same(const double log_acc, const double loglik_diff, const double logprior_diff);
 
@@ -100,6 +104,16 @@ public:
     const Cache& cache, const UINT node_id);
 
 };
+
+} // namesapce pgbart
+
+namesapce pgbart {
+
+TreeMCMC_Ptr init_cgm_mcmc(const Data& train_data, const Control& control, const Param& param,
+  const Cache& cache, const CacheTemp& cache_temp);
+
+tuple<TreeMCMC_Ptr, bool> run_cgm_mcmc_single_tree(TreeMCMC_Ptr tree_mcmc_ptr, const Control& control, 
+  const Data& train_data, const Param& param, const Cache& cache, const CacheTemp& cache_temp);
 
 } // namesapce pgbart
 

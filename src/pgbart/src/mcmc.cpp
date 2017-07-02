@@ -96,7 +96,7 @@ bool Pmcmc::sample(const Data& data, const Control& control, const Param& param,
 } // namesapce pgbart
 
 namespace pgbart {
-Pmcmc_Ptr init_tree_pmcmc(const Data& data_train, const Control& control, const Param& param,
+Pmcmc_Ptr init_particle_mcmc(const Data& data_train, const Control& control, const Param& param,
   const Cache& cache, const CacheTemp& cache_temp) {
   
   Pmcmc_Ptr pmcmc_ptr;
@@ -104,8 +104,9 @@ Pmcmc_Ptr init_tree_pmcmc(const Data& data_train, const Control& control, const 
   return pmcmc_ptr;
 }
 
-tuple<Particle_Ptr, bool> run_pmcmc_single_tree(Particle_Ptr p_ptr, const Control& control, const Data& data_train,
-  const Param& param, const Cache& cache, bool change, const CacheTemp& cache_temp, Pmcmc_Ptr pmcmc_ptr) {
+tuple<Particle_Ptr, bool> run_particle_mcmc_single_tree(Particle_Ptr p_ptr, const Control& control, 
+  const Data& data_train, const Param& param, const Cache& cache, bool change, 
+  const CacheTemp& cache_temp, Pmcmc_Ptr pmcmc_ptr) {
   // starting mcmc
   change = pmcmc_ptr->sample(data_train, control, param, cache, cache_temp);
   // update the tree from the mcmc_object
@@ -120,7 +121,7 @@ tuple<Particle_Ptr, bool> run_pmcmc_single_tree(Particle_Ptr p_ptr, const Contro
 ******************************/
 namespace pgbart {
 
-void TreeMCMC::TreeMCMC(const IntVector& train_ids, const Param& param, const Control& control, 
+TreeMCMC::TreeMCMC(const IntVector& train_ids, const Param& param, const Control& control, 
   const CacheTemp& cache_temp): State(train_ids, param, cache_temp){
 
   this->inner_pc_paires.clear(); // list of nodes where both parent/child are non-terminal
@@ -389,7 +390,7 @@ bool TreeMCMC::swap(const Data& train_data, const Control& control, const Param&
   return change;
 }
 
-tuple<bool, MoveType> TreeMCMC::sample(const Data& train_data, const Control& control, const Param& param, 
+bool TreeMCMC::sample(const Data& train_data, const Control& control, const Param& param, 
   const Cache& cache) {
   MoveType move_type = simulate_discrete_uniform_distribution(0, 3);
   double log_acc = -DBL_MAX;
@@ -416,7 +417,7 @@ tuple<bool, MoveType> TreeMCMC::sample(const Data& train_data, const Control& co
       this->loglik_current += this->loglik[node_id];
     }
   }
-  return make_tuple(change, move_type);
+  return change;
 }
 
 bool TreeMCMC::check_if_same(const double log_acc, const double loglik_diff, const double logprior_diff){
@@ -636,3 +637,22 @@ void TreeMCMC::recompute_prob_split(const Data& train_data, const Param& param, 
 }
 
 } // namesapce pgbart
+
+namespace pgbart {
+
+TreeMCMC_Ptr init_cgm_mcmc(const Data& train_data, const Control& control, const Param& param,
+  const Cache& cache, const CacheTemp& cache_temp) {
+  
+  const IntVector& train_ids = range<int>(0, train_data.n_point);
+  return make_shared<TreeMCMC_Ptr>(train_ids, param, control, cache_temp);
+}
+
+tuple<TreeMCMC_Ptr, bool> run_cgm_mcmc_single_tree(TreeMCMC_Ptr tree_mcmc_ptr, const Control& control, 
+  const Data& train_data, const Param& param, const Cache& cache) {
+
+  const bool change = tree_mcmc_ptr->sample(train_data, control, param, cache);
+  return make_tuple(tree_mcmc_ptr, change);
+}
+
+} // namespace pgbart
+
