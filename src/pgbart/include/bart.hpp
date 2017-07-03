@@ -10,11 +10,13 @@ namespace pgbart {
 class Bart {
 public:
 
-  vector<Particle_Ptr> p_particles; // ptr to the trees
+  vector<Particle_Ptr> p_particles; // ptr to the particles
   vector<Pmcmc_Ptr> pmcmc_objects;  // object to mcmc, note that the trees and pmcmc_objects_trees share the same memory
   Matrix<double> pred_val_mat_train; // n_point * n_tree python self.pred_val_mat_train
   DoubleVector pred_val_sum_train; // python self.pred_val_sum_train
   double lambda_logprior; // python self.lambda_logprior
+  
+  vector<TreeMCMC_Ptr> p_treemcmcs; //used for cgm
 
 public:
 
@@ -52,6 +54,8 @@ namespace pgbart {
 double compute_mse(const DoubleVector& y_true, const DoubleVector& y_pred);
 
 void sample_param(Particle_Ptr p_ptr, const Param& param, bool set_to_mean);
+
+void sample_param(TreeMCMC_Ptr treemcmc_ptr, const Param& param, bool set_to_mean);
 
 // convert the mean of labels to zero
 void center_labels(Data& data);

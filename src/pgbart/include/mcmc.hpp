@@ -75,7 +75,7 @@ public:
 
   IntVector_Ptr get_nodes_subtree(const int node_id);
 
-  double log_acc compute_log_acc_g(const int node_id, const Param& param, const int len_both_children_terminal, 
+  double compute_log_acc_g(const int node_id, const Param& param, const int len_both_children_terminal, 
     const double loglik, const IntVector& train_ids_left, const IntVector& train_ids_right, 
     const Cache& cache, const Control& control, const Data& data, const IntVector& grow_nodes);
 

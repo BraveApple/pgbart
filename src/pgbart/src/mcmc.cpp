@@ -101,7 +101,7 @@ Pmcmc_Ptr init_particle_mcmc(const Data& data_train, const Control& control, con
   
   // Pmcmc_Ptr pmcmc_ptr;
   // pmcmc_ptr = Pmcmc_Ptr(new Pmcmc(data_train, control, param, cache, cache_temp));
-  Pmcmc_Ptr pmcmc_ptr = make_tuple<Pmcmc>(data_train, control, param, cache, cache_temp);
+  Pmcmc_Ptr pmcmc_ptr = make_shared<Pmcmc>(data_train, control, param, cache, cache_temp);
   return pmcmc_ptr;
 }
 
@@ -215,7 +215,7 @@ double TreeMCMC::compute_log_inv_acc_p(const int node_id, const Param& param, co
     logprior_children += std::log(compute_not_split_prob(this->tree_ptr, right, param));
   }
 
-  if (compare_if_zero(logprior_children - this->log_prior[left] - this->log_prior[right])) {
+  if (compare_if_zero(logprior_children - this->logprior[left] - this->logprior[right])) {
     std::cout << "oh oh ... looks like a bug in compute_log_inv_acc_p" << std::endl;
     exit(1);
   }
@@ -306,7 +306,7 @@ bool TreeMCMC::prune(const Data& train_data, const Control& control, const Param
     this->remove_leaf_node_statistics(right);
     this->tree_ptr->addLeafNode(node_id);
     this->tree_ptr->removeNonLeafNode(node_id);
-    this->log_prior[node_id] = std::log(compute_not_split_prob(this->tree_ptr, node_id, param));
+    this->logprior[node_id] = std::log(compute_not_split_prob(this->tree_ptr, node_id, param));
     // OK to set logprior as above since we know that a valid split exists
     // MCMC specific data structure updates
     math::delete_element<int>(this->both_children_terminal, node_id);
@@ -349,7 +349,7 @@ bool TreeMCMC::change(const Data& train_data, const Control& control, const Para
   // log_acc will be modified below
   double log_acc_temp = 0; double loglik_diff = 0; logprior_diff = 0;
   tie(log_acc_temp, loglik_diff, logprior_diff) = this->compute_log_acc_cs(nodes_subtree);
-  const double log_acc = log_acc_temp = log_acc_temp + this->log_prior[node_id];
+  const double log_acc = log_acc_temp = log_acc_temp + this->logprior[node_id];
     - this->logprior_new[node_id];
   const double log_r = std::log(simulate_continuous_uniform_distribution(0, 1));
   if (log_r <= log_acc) {
@@ -645,7 +645,7 @@ TreeMCMC_Ptr init_cgm_mcmc(const Data& train_data, const Control& control, const
   const Cache& cache, const CacheTemp& cache_temp) {
   
   const IntVector& train_ids = range<int>(0, train_data.n_point);
-  return make_shared<TreeMCMC_Ptr>(train_ids, param, control, cache_temp);
+  return make_shared<TreeMCMC>(train_ids, param, control, cache_temp);
 }
 
 tuple<TreeMCMC_Ptr, bool> run_cgm_mcmc_single_tree(TreeMCMC_Ptr tree_mcmc_ptr, const Control& control, 

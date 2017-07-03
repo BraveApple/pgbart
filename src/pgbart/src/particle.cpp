@@ -33,7 +33,7 @@ Particle::Particle(const Particle& p) {
   this->mu_prec_post = p.mu_prec_post;
   this->train_ids = p.train_ids;
   this->node_info = p.node_info;
-  this->log_prior = p.log_prior;
+  this->logprior = p.logprior;
   this->loglik_current = p.loglik_current;
   this->ancestry = p.ancestry;
   this->nodes_processed_itr = p.nodes_processed_itr;
@@ -305,7 +305,7 @@ Particle_Ptr copy_particle(Particle_Ptr particle_ptr) {
   op->train_ids = particle_ptr->train_ids;
   op->node_info = particle_ptr->node_info;
   op->loglik = particle_ptr->loglik;
-  op->log_prior = particle_ptr->log_prior;
+  op->logprior = particle_ptr->logprior;
   // other variables
   op->tree_ptr->tree_depth = particle_ptr->tree_ptr->tree_depth;
   op->do_not_grow = particle_ptr->do_not_grow;
@@ -512,12 +512,12 @@ void grow_next_pg(Particle_Ptr particle_ptr, Particle_Ptr tree_pg_ptr, const UIN
       particle_ptr->tree_ptr->leaf_node_ids.push_back(left);
       particle_ptr->tree_ptr->leaf_node_ids.push_back(right);
       particle_ptr->node_info[node_id] = tree_pg_ptr->node_info[node_id];
-      particle_ptr->log_prior[node_id] = tree_pg_ptr->log_prior[node_id];
+      particle_ptr->logprior[node_id] = tree_pg_ptr->logprior[node_id];
       IntVector tmp{ left, right };
       for (auto node_id_child : tmp) {
         particle_ptr->do_not_split[node_id_child] = false;
         particle_ptr->loglik[node_id_child] = tree_pg_ptr->loglik[node_id_child];
-        particle_ptr->log_prior[node_id_child] = tree_pg_ptr->log_prior[node_id_child];
+        particle_ptr->logprior[node_id_child] = tree_pg_ptr->logprior[node_id_child];
         particle_ptr->train_ids[node_id_child] = tree_pg_ptr->train_ids[node_id_child];
         particle_ptr->sum_y[node_id_child] = tree_pg_ptr->sum_y[node_id_child];
         particle_ptr->sum_y2[node_id_child] = tree_pg_ptr->sum_y2[node_id_child];

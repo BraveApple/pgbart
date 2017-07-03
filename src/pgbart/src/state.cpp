@@ -20,7 +20,7 @@ State::State(const IntVector& train_ids, const Param& param, const CacheTemp& ca
     this->mu_prec_post[this->tree_ptr->root_node_id] = cache_temp.mu_prec_post;
     this->train_ids[this->tree_ptr->root_node_id] = train_ids;
     this->node_info.clear();
-    this->log_prior[this->tree_ptr->root_node_id] = std::log(compute_not_split_prob(this->tree_ptr, this->tree_ptr->root_node_id, param));
+    this->logprior[this->tree_ptr->root_node_id] = std::log(compute_not_split_prob(this->tree_ptr, this->tree_ptr->root_node_id, param));
     this->loglik_current = this->loglik[this->tree_ptr->root_node_id] + 0.0;
   }
 }
@@ -28,9 +28,9 @@ State::State(const IntVector& train_ids, const Param& param, const CacheTemp& ca
 double State::compute_logprior() {
   double sum = 0.0;
   for (auto node_id : this->tree_ptr->leaf_node_ids)
-    sum += this->log_prior[node_id];
+    sum += this->logprior[node_id];
   for (auto node_id : this->tree_ptr->non_leaf_node_ids)
-    sum += this->log_prior[node_id];
+    sum += this->logprior[node_id];
   return sum;
 }
 
@@ -167,7 +167,7 @@ void State::update_left_right_statistics(const UINT& node_id, const double& logp
   const Data& data_train, const Cache& cache, const Param& param) {
   UINT left_node_id = this->tree_ptr->getLeftNodeID(node_id);
   UINT right_node_id = this->tree_ptr->getRightNodeID(node_id);
-  this->log_prior[node_id] = logprior_nodeid;
+  this->logprior[node_id] = logprior_nodeid;
   this->node_info[node_id] = split_info;
 
   this->loglik[left_node_id] = cache_temp.loglik_left;
@@ -176,14 +176,14 @@ void State::update_left_right_statistics(const UINT& node_id, const double& logp
   this->do_not_split[right_node_id] = stop_split(train_ids_right, control, data_train, cache);
 
   if (this->do_not_split[left_node_id])
-    this->log_prior[left_node_id] = 0.0;
+    this->logprior[left_node_id] = 0.0;
   else
-    this->log_prior[left_node_id] = std::log(compute_not_split_prob(tree_ptr, left_node_id, param));
+    this->logprior[left_node_id] = std::log(compute_not_split_prob(tree_ptr, left_node_id, param));
 
   if (this->do_not_split[right_node_id])
-    this->log_prior[right_node_id] = 0.0;
+    this->logprior[right_node_id] = 0.0;
   else
-    this->log_prior[right_node_id] = std::log(compute_not_split_prob(tree_ptr, left_node_id, param));
+    this->logprior[right_node_id] = std::log(compute_not_split_prob(tree_ptr, left_node_id, param));
 
   if (control.if_debug) {
 
@@ -226,7 +226,7 @@ void State::remove_leaf_node_statistics(const UINT& node_id) {
   else {
     math::delete_by_key(this->loglik, node_id);
     math::delete_by_key(this->train_ids, node_id);
-    math::delete_by_key(this->log_prior, node_id);
+    math::delete_by_key(this->logprior, node_id);
     math::delete_by_key(this->sum_y, node_id);
     math::delete_by_key(this->sum_y2, node_id);
     math::delete_by_key(this->n_points, node_id);
@@ -366,7 +366,7 @@ tuple<bool, SplitInfo_Ptr, double>
 void State::print_tree() {
   std::cout << "leaf nodes are \n" << toString(this->tree_ptr->leaf_node_ids) << std::endl;
   std::cout << "non-leaf nodes are \n" << toString(this->tree_ptr->non_leaf_node_ids) << std::endl;
-  std::cout << "logprior = \n" <<  toString(this->log_prior) << std::endl;
+  std::cout << "logprior = \n" <<  toString(this->logprior) << std::endl;
   std::cout << "loglik = \n" << toString(this->loglik) << std::endl;
   std::cout << "sum(logprior) = " << this->compute_logprior() << ", sum(loglik) = " << this->compute_loglik() << std::endl;
   std::cout << "leaf nodes are \n" << toString(this->tree_ptr->leaf_node_ids) << std::endl;

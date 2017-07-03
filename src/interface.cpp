@@ -210,7 +210,7 @@ Rcpp::List train(NumericMatrix& train_data, NumericVector& train_label, bool if_
       update_cache_temp(cache_temp, cache, data_train, param, control);
       // MCMC for i_t-th tree
       bart.p_particles[tree_id]->update_loglik_node_all(data_train, param, cache, control);
-      tie(bart.p_particles[tree_id], change) = run_mcmc_single_tree(bart.p_particles[tree_id], control, data_train, param,
+      tie(bart.p_particles[tree_id], change) = run_particle_mcmc_single_tree(bart.p_particles[tree_id], control, data_train, param,
           cache, change, cache_temp, bart.pmcmc_objects[tree_id]);
 	  // sample mu for i_t-th tree
       sample_param(bart.p_particles[tree_id], param, false);

@@ -12,11 +12,18 @@ Bart::Bart(const Data& data_train, const Param& param, const Control& control, c
   this->pmcmc_objects.clear();
   this->update_pred_val_sum();
   for (UINT i = 0; i < control.m_bart; i++) {
-    Pmcmc_Ptr pmcmc_ptr = init_tree_mcmc(data_train, control, param, cache, cache_temp);
-    Particle_Ptr p_ptr = pmcmc_ptr->p_ptr;
-    sample_param(p_ptr, param, false);
-    this->p_particles.push_back(p_ptr);
-    this->pmcmc_objects.push_back(pmcmc_ptr);
+	  if (control.mcmc_type == "pg") {
+		  Pmcmc_Ptr pmcmc_ptr = init_particle_mcmc(data_train, control, param, cache, cache_temp);
+		  Particle_Ptr p_ptr = pmcmc_ptr->p_ptr;
+		  sample_param(p_ptr, param, false);
+		  this->p_particles.push_back(p_ptr);
+		  this->pmcmc_objects.push_back(pmcmc_ptr);
+	}
+	  else if (control.mcmc_type == "cgm") {
+		  TreeMCMC_Ptr treemcmc_ptr = init_cgm_mcmc(data_train, control, param, cache, cache_temp);
+		  sample_param(treemcmc_ptr, param, false);
+		  this->p_treemcmcs.push_back(treemcmc_ptr);
+	}
     // set the initial pred value
     this->update_pred_val(i, data_train, param, control);
   }
@@ -25,24 +32,30 @@ Bart::Bart(const Data& data_train, const Param& param, const Control& control, c
 }
 
 void Bart::update_pred_val(UINT i_t, const Data& data_train, const Param& param, const Control& control) {
-  IntVector* leaf_id = this->p_particles[i_t]->gen_rules_tree(data_train);
-  DoubleVector* temp = this->p_particles[i_t]->predict_real_val_fast(leaf_id);
-  if (control.if_debug) {
-    std::cout << "current data_train.y_residual = " << toString(data_train.y_residual) << std::endl;
-    std::cout << "predictions of current tree = " << toString(*temp) << std::endl;
-  }
-  this->pred_val_sum_train += *temp;
-  this->pred_val_sum_train -= pred_val_mat_train(":", i_t);
+	IntVector* leaf_id;
+	DoubleVector* temp;
+	if (control.mcmc_type == "pg") {
+		leaf_id = this->p_particles[i_t]->gen_rules_tree(data_train);
+		temp = this->p_particles[i_t]->predict_real_val_fast(leaf_id);
+	}
+	else if (control.mcmc_type == "cgm") {
+		leaf_id = this->p_treemcmcs[i_t]->gen_rules_tree(data_train);
+		temp = this->p_treemcmcs[i_t]->predict_real_val_fast(leaf_id);
+	}
+	if (control.if_debug) {
+		std::cout << "current data_train.y_residual = " << toString(data_train.y_residual) << std::endl;
+		std::cout << "predictions of current tree = " << toString(*temp) << std::endl;
+	}
+	this->pred_val_sum_train += *temp;
+	this->pred_val_sum_train -= pred_val_mat_train(":", i_t);
+    this->pred_val_mat_train.set(":", i_t, *temp);
+	delete leaf_id;
+	delete temp;
 
-  pred_val_mat_train.set(":", i_t, *temp);
-
-  delete leaf_id;
-  delete temp;
-
-  if (control.if_debug) {
-    std::cout << "current data_train.y_original = " << toString(data_train.y_original) << std::endl;
-    std::cout << "predictions of current bart = " << toString(pred_val_sum_train) << std::endl;
-  }
+	if (control.if_debug) {
+		std::cout << "current data_train.y_original = " << toString(data_train.y_original) << std::endl;
+		std::cout << "predictions of current bart = " << toString(pred_val_sum_train) << std::endl;
+	}
 }
 
 void Bart::update_pred_val_sum() {
@@ -72,8 +85,14 @@ map<string, DoubleVector_Ptr> Bart::predict(const Matrix<double>& x, const Doubl
   DoubleVector& pred_val = *pred_val_ptr;
   double log_const = 0.5 * std::log(param.lambda_bart) - 0.5 * std::log(2 * PI);
   for (UINT tree_id = 0; tree_id < control.m_bart; tree_id++) {
-    IntVector leaf_node_ids = this->p_particles[tree_id]->tree_ptr->traverse(x); // apply rules to "x" and create "leaf_node_ids"
-    pred_val += at(this->p_particles[tree_id]->tree_ptr->pred_val_n, leaf_node_ids);
+	  if (control.mcmc_type == "pg") {
+		  IntVector leaf_node_ids = this->p_particles[tree_id]->tree_ptr->traverse(x); // apply rules to "x" and create "leaf_node_ids"
+		  pred_val += at(this->p_particles[tree_id]->tree_ptr->pred_val_n, leaf_node_ids);
+	  }
+	  else if (control.mcmc_type == "cgm") {
+		  IntVector leaf_node_ids = this->p_treemcmcs[tree_id]->tree_ptr->traverse(x); // apply rules to "x" and create "leaf_node_ids"
+		  pred_val += at(this->p_treemcmcs[tree_id]->tree_ptr->pred_val_n, leaf_node_ids);
+	  }
   }
   pred_prob = exp(-0.5 * param.lambda_bart * square(y - pred_val) + log_const);
   map<string, DoubleVector_Ptr> map_temp;
@@ -125,11 +144,20 @@ tuple<double, double> Bart::compute_train_loglik(const Data& data, const Param& 
 //count the var used times
 void Bart::countvar(IntVector* vector, Control& control){
   for (UINT m = 0; m < control.m_bart; m++){
-    map<UINT, SplitInfo>& temp_node_info = this->p_particles[m]->node_info;
-    for (auto pair : temp_node_info){
-      SplitInfo& temp = pair.second;
-      vector->at(temp.feat_id_chosen) = vector->at(temp.feat_id_chosen) + 1;
-    }
+	  if (control.mcmc_type == "pg") {
+		  map<UINT, SplitInfo>& temp_node_info = this->p_particles[m]->node_info;
+		  for (auto pair : temp_node_info) {
+			  SplitInfo& temp = pair.second;
+			  vector->at(temp.feat_id_chosen) = vector->at(temp.feat_id_chosen) + 1;
+		  }
+	  }
+	  else if (control.mcmc_type == "cgm") {
+		  map<UINT, SplitInfo>& temp_node_info = this->p_treemcmcs[m]->node_info;
+		  for (auto pair : temp_node_info) {
+			  SplitInfo& temp = pair.second;
+			  vector->at(temp.feat_id_chosen) = vector->at(temp.feat_id_chosen) + 1;
+		  }
+	  }
   }
 }
 
@@ -158,6 +186,21 @@ void sample_param(Particle_Ptr p_ptr, const Param& param, bool set_to_mean) {
     }
     p_ptr->pred_val_logprior += compute_normal_loglik(p_ptr->tree_ptr->pred_val_n[node_id], param.mu_mean, param.mu_prec);
   }
+}
+
+void sample_param(TreeMCMC_Ptr t_ptr, const Param& param, bool set_to_mean) {
+	math::initial_map(t_ptr->tree_ptr->pred_val_n, t_ptr->tree_ptr->leaf_node_ids, DBL_MAX);
+	t_ptr->pred_val_logprior = 0.0;
+	for (auto node_id : t_ptr->tree_ptr->leaf_node_ids) {
+		double mu_mean_post = t_ptr->mu_mean_post[node_id];
+		double mu_prec_post = t_ptr->mu_prec_post[node_id];
+		if (set_to_mean)
+			t_ptr->tree_ptr->pred_val_n[node_id] = 0.0 + mu_mean_post;
+		else {
+			t_ptr->tree_ptr->pred_val_n[node_id] = simulate_normal_distribution(0.0, 1.0) / std::sqrt(mu_prec_post) + mu_mean_post;
+		}
+		t_ptr->pred_val_logprior += compute_normal_loglik(t_ptr->tree_ptr->pred_val_n[node_id], param.mu_mean, param.mu_prec);
+	}
 }
 
 // convert the mean of labels to zero

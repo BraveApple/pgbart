@@ -26,7 +26,7 @@ public:
 
   map<UINT, IntVector> train_ids; // the id of data point on the node
   map<UINT, SplitInfo> node_info; // the split info of an internal node
-  map<UINT, double> log_prior;
+  map<UINT, double> logprior;
   double loglik_current;
   map<UINT, tuple<double, double>> log_sis_ratio_d;
 
