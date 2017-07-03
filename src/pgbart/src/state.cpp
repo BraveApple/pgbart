@@ -161,6 +161,10 @@ const Control& control) {
     train_ids_left_ptr, train_ids_right_ptr, cache_temp_ptr);
 }
 
+void State::update_depth() {
+	this->tree_ptr->updateTreeDepth();
+}
+
 
 void State::update_left_right_statistics(const UINT& node_id, const double& logprior_nodeid, const SplitInfo& split_info,
   const CacheTemp& cache_temp, const Control& control, const IntVector& train_ids_left, const IntVector& train_ids_right,

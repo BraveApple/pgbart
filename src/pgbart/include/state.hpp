@@ -63,6 +63,8 @@ public:
   
   double compute_logprior();
 
+  void update_depth();
+
   double compute_loglik();
 
   double compute_logprob();

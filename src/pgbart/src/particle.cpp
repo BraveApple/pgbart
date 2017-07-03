@@ -144,9 +144,7 @@ void Particle::check_nodes_processed_itr() {
   }
 }
 
-void Particle::update_depth() {
-  this->tree_ptr->updateTreeDepth();
-}
+
 
 } // namespace pgbart
 

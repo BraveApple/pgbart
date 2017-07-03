@@ -52,7 +52,7 @@ pgbart::Matrix<double> convert_matrix(NumericMatrix& rcpp_matrix){
 Rcpp::List train(NumericMatrix& train_data, NumericVector& train_label, bool if_test, NumericMatrix& test_data, NumericVector& test_label, String& model_file, double alpha_bart, double alpha_split,
   double beta_split, bool if_center_label, bool if_debug, double ess_threshold, unsigned int init_seed_id, bool if_set_seed, double k_bart,
   unsigned int m_bart, unsigned int min_size, unsigned int ndpost, unsigned int nskip, unsigned int keepevery, const String& variance_type, double q_bart,
-  unsigned int verbose_level, unsigned int n_particles, const String& resample_type) {
+  unsigned int verbose_level, unsigned int n_particles, const String& resample_type, const String& mcmc_type) {
 	/*
 		Train the model and save it in a file using the given training data and parameters
 
@@ -83,7 +83,7 @@ Rcpp::List train(NumericMatrix& train_data, NumericVector& train_label, bool if_
 
   // collect all the parameters in an object
   Control control(alpha_bart, alpha_split, beta_split, if_center_label, if_debug, ess_threshold, init_seed_id, if_set_seed,
-    k_bart, m_bart, min_size, ndpost, nskip, keepevery, variance_type, q_bart, verbose_level, n_particles, resample_type);
+    k_bart, m_bart, min_size, ndpost, nskip, keepevery, variance_type, q_bart, verbose_level, n_particles, resample_type, mcmc_type);
 
   cout << control.toString() << endl;
   if (if_set_seed){
@@ -209,20 +209,32 @@ Rcpp::List train(NumericMatrix& train_data, NumericVector& train_label, bool if_
       bart.update_residual(tree_id, data_train);
       update_cache_temp(cache_temp, cache, data_train, param, control);
       // MCMC for i_t-th tree
-      bart.p_particles[tree_id]->update_loglik_node_all(data_train, param, cache, control);
-      tie(bart.p_particles[tree_id], change) = run_particle_mcmc_single_tree(bart.p_particles[tree_id], control, data_train, param,
-          cache, change, cache_temp, bart.pmcmc_objects[tree_id]);
-	  // sample mu for i_t-th tree
-      sample_param(bart.p_particles[tree_id], param, false);
-      logprior += bart.p_particles[tree_id]->pred_val_logprior;
-
+	  if (control.mcmc_type == "pg") {
+		  bart.p_particles[tree_id]->update_loglik_node_all(data_train, param, cache, control);
+		  tie(bart.p_particles[tree_id], change) = run_particle_mcmc_single_tree(bart.p_particles[tree_id], control, data_train, param,
+			  cache, change, cache_temp, bart.pmcmc_objects[tree_id]);
+		  // sample mu for i_t-th tree
+		  sample_param(bart.p_particles[tree_id], param, false);
+		  logprior += bart.p_particles[tree_id]->pred_val_logprior;
+	  }
+	  else if (control.mcmc_type == "cgm") {
+		  bart.p_treemcmcs[tree_id]->update_loglik_node_all(data_train, param, cache, control);
+		  tie(bart.p_treemcmcs[tree_id], change) = run_cgm_mcmc_single_tree(bart.p_treemcmcs[tree_id], control, data_train, param,
+			  cache, cache_temp);
+		  // sample mu for i_t-th tree
+		  sample_param(bart.p_treemcmcs[tree_id], param, false);
+		  logprior += bart.p_treemcmcs[tree_id]->pred_val_logprior;
+	  }
+      
       //update pred_val
       bart.update_pred_val(tree_id, data_train, param, control);
 
       //update stats
       //'change' indicates whether MCMC move was accepted
-      bart.p_particles[tree_id]->update_depth();
-
+	  if(control.mcmc_type == "pg")
+		bart.p_particles[tree_id]->update_depth();
+	  else if(control.mcmc_type == "cgm")
+		bart.p_treemcmcs[tree_id]->update_depth();
     }
 
     logprior = -__DBL_MAX__;

@@ -57,6 +57,8 @@ private:
   std::vector<NodePair> inner_pc_paires;
   IntVector both_children_terminal;
 
+  double pred_val_logprior;
+
   map<UINT, SplitInfo> node_info_new;
   map<UINT, double> loglik_new;
   map<UINT, double> logprior_new;

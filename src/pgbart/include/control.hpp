@@ -37,15 +37,16 @@ struct Control {
   UINT verbose_level;
   UINT n_particles;
   string resample_type;
+  string mcmc_type;
 
 
   Control() : alpha_bart(3.0), alpha_split(0.95), beta_split(0.5), if_center_label(false), if_debug(false), ess_threshold(1.0), init_seed_id(1),
     if_set_seed(false), k_bart(2.0), m_bart(1), min_size(1), ndpost(1000), nskip(100), keepevery(1), variance_type("unconditional"), q_bart(0.9), lambda_bart(0.5),
-    verbose_level(0), n_particles(10), resample_type("multinomial"){}
+    verbose_level(0), n_particles(10), resample_type("multinomial"), mcmc_type("pg"){}
 
   Control(double alpha_bart, double alpha_split, double beta_split, bool if_center_label, bool if_debug, double ess_threshold, UINT init_seed_id,
     bool if_set_seed, double k_bart, UINT m_bart, UINT min_size, UINT ndpost, UINT nskip, UINT keepevery, string variance_type, double q_bart,
-    UINT verbose_level, UINT n_particles, string resample_type) {
+    UINT verbose_level, UINT n_particles, string resample_type, string mcmc_type) {
     this->alpha_bart = alpha_bart;
     this->alpha_split = alpha_split;
     this->beta_split = beta_split;
@@ -65,6 +66,7 @@ struct Control {
     this->verbose_level = verbose_level;
     this->n_particles = n_particles;
     this->resample_type = resample_type;
+	this->mcmc_type = mcmc_type;
   }
 
   string toString() {
@@ -89,6 +91,7 @@ struct Control {
     os << "verbose_level = " << this->verbose_level << "\n";
     os << "n_particles = " << this->n_particles << "\n";
     os << "resample_type = " << this->resample_type << "\n";
+	os << "mcmc_type = " << this->mcmc_type << "\n";
     return os.str();
   }
 };

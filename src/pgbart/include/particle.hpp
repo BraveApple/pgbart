@@ -36,7 +36,7 @@ public:
 
   void check_nodes_processed_itr();
 
-  void update_depth();
+  
 };
 
 } // namespace pgbart
