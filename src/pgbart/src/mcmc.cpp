@@ -246,7 +246,7 @@ bool TreeMCMC::grow(const Data& train_data, const Control& control, const Param&
   bool do_not_split_node_id; SplitInfo_Ptr split_info_ptr; double logprior_nodeid;
   tie(do_not_split_node_id, split_info_ptr, logprior_nodeid) =
     this->sample_split_prior(node_id, train_data, param, control, cache);
-  if (!do_not_split_node_id) {
+  if (do_not_split_node_id) {
     std::cout << "Error: do_not_split_node_id" << std::endl;
     exit(1);
   }
