@@ -219,7 +219,6 @@ struct NodePair {
 
 namespace pgbart {
 
-#define PGBART_INVALID_NODE_NUM static_cast<size_t>(-1)
 #define BART_PI static_cast<double>(3.14159265358979323846)
 #define BART_DBL_MAX 1.7976931348623158e+308 /* max value */
 

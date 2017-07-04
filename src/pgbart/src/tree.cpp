@@ -194,4 +194,5 @@ DoubleVector Tree::pred_real_val(const Data& data_test) {
   }
   return pred_val;
 }
-}
+
+} // namespace pgbart
