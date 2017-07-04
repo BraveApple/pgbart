@@ -21,7 +21,7 @@ public:
   map<UINT, double> sum_y2; // sum of square of labels on a node
   map<UINT, UINT> n_points; // number of data point on a node
   map<UINT, double> loglik; // loglik of a node
-  map<UINT, double> mu_mean_post; //mean of the normal distribution of mu on a node, posterior probability 
+  map<UINT, double> mu_mean_post; //mean of the normal distribution of mu on a node, posterior probability
   map<UINT, double> mu_prec_post; //stddev of the normal distribution of mu on a node, posterior probability
 
   map<UINT, IntVector> train_ids; // the id of data point on the node
@@ -60,7 +60,7 @@ public:
   */
   tuple<IntVector_Ptr, DoubleVector_Ptr, map<UINT, DimensionInfo_Ptr>, bool>
     find_valid_dimensions(const Data& data_train, const Cache& cache, const IntVector& train_ids, const Control& control);
-  
+
   double compute_logprior();
 
   void update_depth();
@@ -73,9 +73,11 @@ public:
 
   void check_depth();
 
-  IntVector* gen_rules_tree(const Data& data_train);
+  // IntVector* gen_rules_tree(const Data& data_train);
+  IntVector_Ptr gen_rules_tree(const Data& data_train);
 
-  DoubleVector* predict_real_val_fast(IntVector* leaf_id);
+  // DoubleVector* predict_real_val_fast(IntVector* leaf_id);
+  DoubleVector_Ptr predict_real_val_fast(IntVector_Ptr leaf_id);
 
   void update_loglik_node(UINT node_id, const Data& data, const Param& param, const Cache& cache, const Control& control);
 

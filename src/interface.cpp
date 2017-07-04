@@ -228,7 +228,7 @@ Rcpp::List train(NumericMatrix& train_data, NumericVector& train_label, bool if_
 		  sample_param(bart.p_treemcmcs[tree_id], param, false);
 		  logprior += bart.p_treemcmcs[tree_id]->pred_val_logprior;
 	  }
-      
+
       //update pred_val
       bart.update_pred_val(tree_id, data_train, param, control);
 
@@ -283,16 +283,16 @@ Rcpp::List train(NumericMatrix& train_data, NumericVector& train_label, bool if_
   		pgbart::DoubleVector pred_result(n_point, 0);
   		// for each tree of the model, compute the pred_value
   		for (UINT m = 0; m < bart.p_particles.size(); m++) {
-  			IntVector* leaf_id = bart.p_particles[m]->gen_rules_tree(data_test);
-  			pgbart::DoubleVector* temp = bart.p_particles[m]->predict_real_val_fast(leaf_id);
+  			IntVector_Ptr leaf_id_ptr = bart.p_particles[m]->gen_rules_tree(data_test);
+  			DoubleVector_Ptr temp_ptr = bart.p_particles[m]->predict_real_val_fast(leaf_id_ptr);
   			for (UINT k = 0; k < n_point; k++) {
-  				pred_result[k] += temp->at(k);
+  				pred_result[k] += temp_ptr->at(k);
         }
-  			delete leaf_id;
-  			delete temp;
+  			// delete leaf_id;
+  			// delete temp;
   		}
   		double mse_test = sum2(pred_result - data_test.y_original) / n_point;
-  		double loglik_test = 0.5 * n_point * (std::log(param.lambda_bart) - std::log(2 * PI) - param.lambda_bart * mse_test);
+  		double loglik_test = 0.5 * n_point * (std::log(param.lambda_bart) - std::log(2 * BART_PI) - param.lambda_bart * mse_test);
   		vector_mse_test[i_mse_test] = mse_test; i_mse_test++;
   		vector_loglik_test[i_loglik_test] = loglik_test; i_loglik_test++;
 

@@ -21,7 +21,7 @@ Pmcmc::Pmcmc(const Data& data, const Control& control, const Param& param, const
   const_cast<Control&>(control).n_particles = 1;
   std::tie(particles_ptr, log_weights_ptr) = init_particles(data, control, param, cache_temp);
   const_cast<Control&>(control).n_particles = n_particles_backup;
-  log_pd = -DBL_MAX;
+  log_pd = -BART_DBL_MAX;
   IntVector origin_itr = { 0 };
   for (UINT i = 0; i < particles_ptr->size(); i++) {
     (*particles_ptr)[i]->nodes_processed_itr.push_back(origin_itr);
@@ -193,8 +193,8 @@ double TreeMCMC::compute_log_acc_g(const int node_id, const Param& param, const 
   const double log_acc_loglik = loglik - this->loglik[node_id];
   double log_acc = log_acc_prior + log_acc_loglik;
 
-  if (loglik == -DBL_MAX) // Just need to ensure that an invalid split is not grown
-    log_acc = -DBL_MAX;
+  if (loglik == -BART_DBL_MAX) // Just need to ensure that an invalid split is not grown
+    log_acc = -BART_DBL_MAX;
 
   return log_acc;
 }
@@ -226,7 +226,7 @@ double TreeMCMC::compute_log_inv_acc_p(const int node_id, const Param& param, co
   const double log_inv_acc_loglik = loglik - this->loglik[node_id];
   const double log_inv_acc = log_inv_acc_loglik + log_inv_acc_prior;
 
-  if (log_inv_acc > -DBL_MAX) {
+  if (log_inv_acc > -BART_DBL_MAX) {
     std::cout << "Error" << std::endl;
   }
   return log_inv_acc;
@@ -410,7 +410,7 @@ bool TreeMCMC::sample(const Data& train_data, const Control& control, const Para
 
   std::cout << "\n\nmove_type = " << move_type << "\n\n";
 
-  // double log_acc = -DBL_MAX;
+  // double log_acc = -BART_DBL_MAX;
   // double log_r = 0.0;
   IntVector grow_nodes;
   for (UINT i = 0; i < this->tree_ptr->leaf_node_ids.size(); i++) {

@@ -153,8 +153,8 @@ const Control& control) {
     train_ids_left_ptr = IntVector_Ptr(new IntVector());
     train_ids_right_ptr = IntVector_Ptr(new IntVector());
     cache_temp_ptr = CacheTemp_Ptr(new CacheTemp());
-    cache_temp_ptr->loglik_left = -DBL_MAX;
-    cache_temp_ptr->loglik_right = -DBL_MAX;
+    cache_temp_ptr->loglik_left = -BART_DBL_MAX;
+    cache_temp_ptr->loglik_right = -BART_DBL_MAX;
 
   }
   return make_tuple(do_not_split_node_id, split_info_ptr, log_sis_ratio, logprior_nodeid,
@@ -388,8 +388,9 @@ void State::print_tree() {
   }
 }
 
-IntVector* State::gen_rules_tree(const Data& data_train){
-  IntVector* leaf_id = new IntVector(data_train.x.n_row, 0);
+IntVector_Ptr State::gen_rules_tree(const Data& data_train){
+  // IntVector* leaf_id = new IntVector(data_train.x.n_row, 0);
+  IntVector_Ptr leaf_id_ptr = make_shared<IntVector>(data_train.n_point, 0);
   UINT row = data_train.x.n_row;
   UINT column = data_train.x.n_column;
   for (UINT node_id : this->tree_ptr->leaf_node_ids){
@@ -419,19 +420,20 @@ IntVector* State::gen_rules_tree(const Data& data_train){
     }
     for (UINT j = 0; j < row; j++){
       if (condition_vector[j])
-        leaf_id->at(j) = node_id;
+        leaf_id_ptr->at(j) = node_id;
     }
   }
-  return leaf_id;
+  return leaf_id_ptr;
 }
 
-DoubleVector* State::predict_real_val_fast(IntVector* leaf_id){
-  DoubleVector* pred_val = new DoubleVector(leaf_id->size());
-  UINT length = leaf_id->size();
+DoubleVector_Ptr State::predict_real_val_fast(IntVector_Ptr leaf_id_ptr){
+  // DoubleVector* pred_val = new DoubleVector(leaf_id->size());
+  DoubleVector_Ptr pred_val_ptr = make_shared<DoubleVector>(leaf_id_ptr->size());
+  UINT length = leaf_id_ptr->size();
   for (UINT i = 0; i < length; i++){
-    pred_val->at(i) = (this->tree_ptr->pred_val_n[leaf_id->at(i)]);
+    pred_val_ptr->at(i) = (this->tree_ptr->pred_val_n[leaf_id_ptr->at(i)]);
   }
-  return pred_val;
+  return pred_val_ptr;
 }
 
 void State::check_depth() {
@@ -656,7 +658,7 @@ tuple<Param_Ptr, Cache_Ptr, CacheTemp_Ptr> precompute(const Data& data_train, co
   // pre-compute stuff
   //Cache cache;
   cache_ptr->nn_prior_term = 0.5 * std::log(param_ptr->mu_prec) - 0.5 * param_ptr->mu_prec * param_ptr->mu_mean * param_ptr->mu_mean;
-  cache_ptr->half_log_2pi = 0.5 * std::log(2 * PI);
+  cache_ptr->half_log_2pi = 0.5 * std::log(2 * BART_PI);
   // compute cache.nn_prior_term and cache.half_lod_2pi at first, otherwise fail to implement compute_normal_normalizer
   compute_normal_normalizer(*param_ptr, *cache_ptr, *cache_temp_ptr, "parent");
 
@@ -790,7 +792,7 @@ double compute_gamma_loglik(double x, double alpha, double beta) {
 }
 
 double compute_normal_loglik(double x, double mu, double prec) {
-  return 0.5 * (std::log(prec) - std::log(2 * PI) - prec * (x - mu) * (x - mu));
+  return 0.5 * (std::log(prec) - std::log(2 * BART_PI) - prec * (x - mu) * (x - mu));
 }
 
 double compute_split_prob(const shared_ptr<Tree> tree, const size_t& node_id, const Param& param) {
