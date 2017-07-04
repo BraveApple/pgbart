@@ -470,16 +470,19 @@ bool TreeMCMC::check_if_same(const double log_acc, const double loglik_diff, con
 	}
 	logprior_diff_2 = sum1 - sum2;
 	log_acc_2 = loglik_diff_2 + logprior_diff_2;
+
+  bool op = false;
 	if (fabs(log_acc_2) < 1e-10) {
-    return true;
+    op = true;
   } else {
-		if (log_acc != -__DBL_MAX__ && log_acc_2 == -__DBL_MAX__) {
+		if (log_acc != -BART_DBL_MAX && log_acc_2 == -BART_DBL_MAX) {
 			std::cout << "check_if_terms_match" << std::endl;
 			std::cout << "loglik_diff = " << loglik_diff << ", " << "loglik_diff_2 = " << loglik_diff_2 << std::endl;
 			std::cout << "logprior_diff = " << logprior_diff << ", " << "logprior_diff_2 = " << logprior_diff_2 << std::endl;
-			return false;
+			op = false;
 		}
 	}
+  return op;
 }
 
 tuple<double, double, double> TreeMCMC::compute_log_acc_cs(const IntVector& nodes_subtree){
@@ -523,8 +526,8 @@ void TreeMCMC::create_new_statistics(const IntVector& nodes_subtree, const IntVe
 	UINT in_length = nodes_subtree.size();
 	for (UINT i = 0; i < in_length; i++){
 		UINT node_id = nodes_subtree[i];
-		this->loglik_new[node_id] = -__DBL_MAX__;
-		this->logprior_new[node_id] = -__DBL_MAX__;
+		this->loglik_new[node_id] = -BART_DBL_MAX;
+		this->logprior_new[node_id] = -BART_DBL_MAX;
 		this->train_ids_new[node_id].clear();
 		this->sum_y_new[node_id] = 0;
 		this->sum_y2_new[node_id] = 0;
@@ -563,7 +566,7 @@ void TreeMCMC::evaluate_new_subtree(const Data& train_data, const UINT node_id_s
 	// CacheTemp_Ptr cache_temp_ptr(new CacheTemp());
 	CacheTemp_Ptr cache_temp_ptr = make_shared<CacheTemp>();
   for (UINT node_id : nodes_subtree){
-		this->loglik_new[node_id] = -__DBL_MAX__;
+		this->loglik_new[node_id] = -BART_DBL_MAX;
 		if (this->n_points_new[node_id] > 0){
 
 			cache_temp_ptr->n_points = this->n_points_new[node_id];
@@ -607,7 +610,7 @@ void TreeMCMC::recompute_prob_split(const Data& train_data, const Param& param, 
   const Cache& cache, const UINT node_id) {
 	const IntVector& train_ids = this->train_ids_new[node_id];
 	if (stop_split(train_ids, control, train_data, cache)) {
-		this->logprior_new[node_id] = -__DBL_MAX__;
+		this->logprior_new[node_id] = -BART_DBL_MAX;
 	}
 	else {
 		const SplitInfo&  n_info = this->node_info_new[node_id];
@@ -624,7 +627,7 @@ void TreeMCMC::recompute_prob_split(const Data& train_data, const Param& param, 
 			find_valid_dimensions(train_data, cache, train_ids, control);
 
 		if (!check_if_included(*feat_id_valid_ptr, feat_id_chosen)) {
-			this->logprior_new[node_id] = -__DBL_MAX__;
+			this->logprior_new[node_id] = -BART_DBL_MAX;
 		}
 		else {
 			DoubleVector log_prob_feat;
@@ -639,7 +642,7 @@ void TreeMCMC::recompute_prob_split(const Data& train_data, const Param& param, 
 			double x_max = d_info->x_max;
 			DoubleVector& feat_score_cumsum_prior_current = d_info->feat_score_cumsum_prior_current;
 			if (split_chosen <= x_min || split_chosen >= x_max)
-				this->logprior_new[node_id] = -__DBL_MAX__;
+				this->logprior_new[node_id] = -BART_DBL_MAX;
 			else {
 				double z_prior = feat_score_cumsum_prior_current[idx_max] - feat_score_cumsum_prior_current[idx_min];
 				DoubleVector prob_split_prior;

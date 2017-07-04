@@ -240,7 +240,7 @@ Rcpp::List train(NumericMatrix& train_data, NumericVector& train_label, bool if_
 		bart.p_treemcmcs[tree_id]->update_depth();
     }
 
-    logprior = -__DBL_MAX__;
+    logprior = -BART_DBL_MAX;
 
   	if (itr >= nskip && (itr - nskip) % keepevery == 0) {
   		time_t t = time(NULL);

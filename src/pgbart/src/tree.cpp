@@ -120,10 +120,10 @@ UINT Tree::getSiblingNodeID(UINT node_id) const {
     std::cout << "node_id = " << node_id << " is a root node, so it does not have parent node!" << std::endl;
     exit(1);
   }
-  const int parent = this->getParentNodeID(node_id);
-  const int left = this->getLeftNodeID(parent);
-  const int right = this->getRightNodeID(parent);
-  int sibling_id = 0;
+  const UINT parent = this->getParentNodeID(node_id);
+  const UINT left = this->getLeftNodeID(parent);
+  const UINT right = this->getRightNodeID(parent);
+  UINT sibling_id = 0;
   if (left == node_id) {
     sibling_id = right;
   }
