@@ -295,7 +295,7 @@ bool TreeMCMC::prune(const Data& train_data, const Control& control, const Param
   if (this->both_children_terminal.size() == 0) {
     return change;
   }
-  const int node_id = ramdom_choice(grow_nodes);
+  const int node_id = ramdom_choice(this->both_children_terminal);
   // const int feat_id = this->node_info[node_id].feat_id_chosen;
   const int left = this->tree_ptr->getLeftNodeID(node_id);
   const int right = this->tree_ptr->getRightNodeID(node_id);
