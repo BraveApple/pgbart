@@ -274,6 +274,7 @@ tuple<IntVector_Ptr, DoubleVector_Ptr, map<UINT, DimensionInfo_Ptr>, bool>
   }
   //IntVector feat_id_valid;
   for (auto feat_id : cache.range_n_dim) {
+
     if ((*score_feat_ptr)[feat_id] > 0.0)
       feat_id_valid_ptr->push_back(feat_id);
   }
@@ -302,6 +303,9 @@ tuple<bool, SplitInfo_Ptr, double>
 
 
   IntVector& train_ids = this->train_ids[node_id];
+
+  std::cout << "\n\ntrain_ids.size = " << train_ids.size() << "\n";
+
   //UINT n_train_ids = train_ids.size();
   double log_prob_split = std::log(compute_split_prob(this->tree_ptr, node_id, param));
   //double prob_not_split = compute_not_split_prob(this->tree_ptr, node_id, param);

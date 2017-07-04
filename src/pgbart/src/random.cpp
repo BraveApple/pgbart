@@ -23,7 +23,7 @@ UINT simulate_discrete_uniform_distribution(UINT minValue, UINT maxValue) {
 
 int ramdom_choice(const IntVector& vec) {
   const int len = vec.size();
-  const int id = simulate_discrete_uniform_distribution(0, len);
+  const int id = simulate_discrete_uniform_distribution(0, len - 1);
   return vec[id];
 }
 

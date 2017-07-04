@@ -239,6 +239,10 @@ bool TreeMCMC::grow(const Data& train_data, const Control& control, const Param&
   if (grow_nodes.size() == 0)
     return change;
   const int node_id = ramdom_choice(grow_nodes);
+
+  std::cout << "grow_nodes = " << grow_nodes[0] << "\n\n";
+  std::cout << "random_choice_id = " << node_id << "\n\n";
+
   bool do_not_split_node_id; SplitInfo_Ptr split_info_ptr; double logprior_nodeid;
   tie(do_not_split_node_id, split_info_ptr, logprior_nodeid) =
     this->sample_split_prior(node_id, train_data, param, control, cache);
@@ -246,7 +250,6 @@ bool TreeMCMC::grow(const Data& train_data, const Control& control, const Param&
     std::cout << "Error: do_not_split_node_id" << std::endl;
     exit(1);
   }
-
   const IntVector train_ids = this->train_ids[node_id];
   const int feat_id_chosen = split_info_ptr->feat_id_chosen;
   const double split_chosen = split_info_ptr->split_chosen;
@@ -265,6 +268,7 @@ bool TreeMCMC::grow(const Data& train_data, const Control& control, const Param&
   const double log_acc = this->compute_log_acc_g(node_id, param, len_both_children_terminal_new,
     loglik, *train_ids_left_ptr, *train_ids_right_ptr, cache, control, train_data, grow_nodes);
   const double log_r = std::log(simulate_continuous_uniform_distribution(0, 1));
+
   if (log_r <= log_acc) {
     this->update_left_right_statistics(node_id, logprior_nodeid, *split_info_ptr, *cache_temp_ptr, 
       control, *train_ids_left_ptr, *train_ids_right_ptr, train_data, cache, param);
@@ -403,6 +407,9 @@ bool TreeMCMC::sample(const Data& train_data, const Control& control, const Para
   const Cache& cache) {
 
   const int move_type = simulate_discrete_uniform_distribution(0, 3);
+
+  std::cout << "\n\nmove_type = " << move_type << "\n\n";
+
   // double log_acc = -DBL_MAX;
   // double log_r = 0.0;
   IntVector grow_nodes;
@@ -413,13 +420,18 @@ bool TreeMCMC::sample(const Data& train_data, const Control& control, const Para
     }
   }
   bool change = false;
+
+  std::cout << "\n\ngrow_nodes.size = " << grow_nodes.size() << "\n\n";
+
   switch(move_type) {
-    case 0: change = this->grow(train_data, control, param, cache, grow_nodes);
-    case 1: change = this->prune(train_data, control, param, cache, grow_nodes);
-    case 2: change = this->change(train_data, control, param, cache, grow_nodes);
-    case 3: change = this->swap(train_data, control, param, cache, grow_nodes);
+  case 0: change = this->grow(train_data, control, param, cache, grow_nodes); break;
+  case 1: change = this->prune(train_data, control, param, cache, grow_nodes); break;
+  case 2: change = this->change(train_data, control, param, cache, grow_nodes); break;
+  case 3: change = this->swap(train_data, control, param, cache, grow_nodes); break;
     default: { std::cout << "Error move type!" << std::endl; exit(1); }
   }
+
+
   if (change) {
     this->tree_ptr->updateTreeDepth();
     this->loglik_current = 0.0;
@@ -427,6 +439,8 @@ bool TreeMCMC::sample(const Data& train_data, const Control& control, const Para
       this->loglik_current += this->loglik[node_id];
     }
   }
+
+
   return change;
 }
 

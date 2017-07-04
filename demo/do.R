@@ -14,6 +14,8 @@ y=Ey+sigma*rnorm(n)
 fit.pgbart <- pgbart_train(train_data = x,
                            train_label = y,
                            model_file = "./pgbart.model",
-                           nskip=100, ndpost=200,
-                           if_test = FALSE) #the output path is locale by default.
+                           nskip=10, ndpost=20,
+                           if_test = FALSE,
+                           verbose_level = 0,
+                           mcmc_type = "pg") #the output path is locale by default.
 summary(fit.pgbart$train$sigma)

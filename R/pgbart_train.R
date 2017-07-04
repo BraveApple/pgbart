@@ -1,8 +1,8 @@
 pgbart_train <- function(train_data, train_label, if_test = FALSE, test_data = matrix(nrow = 0, ncol = 0), test_label = vector(length = 0),
   model_file, alpha_bart = 3.0, q_bart = 0.9, alpha_split = 0.95, beta_split = 0.5, if_center_label = FALSE,
 	ess_threshold = 1.0, init_seed_id = 1, if_set_seed = TRUE,k_bart = 2.0, m_bart = 200, min_size = 1, ndpost = 200, nskip = 100, keepevery = 1,
-	verbose_level = 1, n_particles = 10) {
-  
+	verbose_level = 1, n_particles = 10, mcmc_type = "pg") {
+
   if_debug=FALSE
   variance_type = "unconditional"
   resample_type = "multinomial"
@@ -65,12 +65,14 @@ pgbart_train <- function(train_data, train_label, if_test = FALSE, test_data = m
   if(n_particles < 1)
     stop("n_particles is the number of particles, it must be not less than 1, default 10!")
   if(resample_type != "multinomial" && resample_type != "systematic")
-    stop("control.resample_type must be \"multinomial\" or \"systematic\"!")
+    stop("resample_type must be \"multinomial\" or \"systematic\"!")
+  if(mcmc_type != "pg" && mcmc_type != "cgm")
+    stop("mcmc_type must be pg or cgm")
 
 
   val_tmp <- train(train_data, train_label, if_test, test_data, test_label, model_file, alpha_bart, alpha_split, beta_split, if_center_label,
     if_debug, ess_threshold, init_seed_id, if_set_seed, k_bart, m_bart, min_size, ndpost,
-    nskip, keepevery, variance_type, q_bart, verbose_level, n_particles, resample_type)
+    nskip, keepevery, variance_type, q_bart, verbose_level, n_particles, resample_type, mcmc_type)
 
   if(if_center_label){
     ori_mean <- mean(train_label)
