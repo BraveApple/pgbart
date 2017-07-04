@@ -17,15 +17,16 @@ see paper for further details
 http://www.gatsby.ucl.ac.uk/~balaji/pgbart_aistats15.pdf
 ****************************************************************/
 
-#include <pgbart/include/random.hpp>
-#include <pgbart/include/control.hpp>
-#include <pgbart/include/data.hpp>
-#include <pgbart/include/math.hpp>
-#include <pgbart/include/bart.hpp>
-#include <pgbart/include/serialize.hpp>
 #include <iostream>
 #include <ctime>
 #include <Rcpp.h>
+
+#include "pgbart/include/random.hpp"
+#include "pgbart/include/control.hpp"
+#include "pgbart/include/data.hpp"
+#include "pgbart/include/math.hpp"
+#include "pgbart/include/bart.hpp"
+#include "pgbart/include/serialize.hpp"
 
 using namespace std;
 using namespace pgbart;
@@ -101,7 +102,7 @@ Rcpp::List train(NumericMatrix& train_data, NumericVector& train_label, bool if_
   cout << "data_train point: " << data_train.n_point << endl;
   cout << "data_train features: " <<data_train.n_feature << endl;
   Data data_test;
-  if (if_test){
+  if (if_test) {
 	  pgbart::Matrix<double> test_x = convert_matrix(test_data);
 	  std::vector<double> test_y_original = as<std::vector<double>>(test_label);
 	  Data tmp_test(test_x, test_y_original);
@@ -211,8 +212,10 @@ Rcpp::List train(NumericMatrix& train_data, NumericVector& train_label, bool if_
       // MCMC for i_t-th tree
 	  if (control.mcmc_type == "pg") {
 		  bart.p_particles[tree_id]->update_loglik_node_all(data_train, param, cache, control);
-		  tie(bart.p_particles[tree_id], change) = run_particle_mcmc_single_tree(bart.p_particles[tree_id], control, data_train, param,
-			  cache, change, cache_temp, bart.pmcmc_objects[tree_id]);
+		  tie(bart.p_particles[tree_id], change) = run_particle_mcmc_single_tree(control, data_train, param,
+        cache, change, cache_temp, bart.pmcmc_objects[tree_id]);
+      // tie(bart.p_particles[tree_id], change) = run_particle_mcmc_single_tree(bart.p_particles[tree_id], control, data_train, param,
+			 //  cache, change, cache_temp, bart.pmcmc_objects[tree_id]);
 		  // sample mu for i_t-th tree
 		  sample_param(bart.p_particles[tree_id], param, false);
 		  logprior += bart.p_particles[tree_id]->pred_val_logprior;

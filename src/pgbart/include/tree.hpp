@@ -54,7 +54,7 @@ public:
 
   UINT getRightNodeID(UINT node_id) const;
 
-  UINT getParentNodeID(UINT node_id);
+  UINT getParentNodeID(UINT node_id) const;
 
   UINT getSiblingNodeID(UINT node_id) const;
 

@@ -45,7 +45,7 @@ void Tree::addLeafNode(UINT node_id) {
     std::cout << "node_id = " << node_id << " is a ready leaf node.";
     exit(1);
   }
-  this->leaf_node_ids.puhs_back(node_id);
+  this->leaf_node_ids.push_back(node_id);
 }
 
 void Tree::removeLeafNode(UINT node_id) {
@@ -53,7 +53,7 @@ void Tree::removeLeafNode(UINT node_id) {
     std::cout << "node_id = " << node_id << " is not a leaf node.";
     exit(1);
   }
-  math::delete_element<int>(this->leaf_node_ids, node_id);
+  math::delete_element<UINT>(this->leaf_node_ids, node_id);
 }
 
 void Tree::addNonLeafNode(UINT node_id) {
@@ -61,7 +61,7 @@ void Tree::addNonLeafNode(UINT node_id) {
     std::cout << "node_id = " << node_id << " is a ready non-leaf node.";
     exit(1);
   }
-  this->non_leaf_node_ids.puhs_back(node_id);
+  this->non_leaf_node_ids.push_back(node_id);
 }
 
 void Tree::removeNonLeafNode(UINT node_id) {
@@ -69,7 +69,7 @@ void Tree::removeNonLeafNode(UINT node_id) {
     std::cout << "node_id = " << node_id << " is not a non-leaf node.";
     exit(1);
   }
-  math::delete_element<int>(this->non_leaf_node_ids, node_id);
+  math::delete_element<UINT>(this->non_leaf_node_ids, node_id);
 }
 
 UINT Tree::getLeftNodeID(UINT node_id) const {
@@ -98,7 +98,7 @@ UINT Tree::getRightNodeID(UINT node_id) const {
   return right_node_id;
 }
 
-UINT Tree::getParentNodeID(UINT node_id) {
+UINT Tree::getParentNodeID(UINT node_id) const {
   if (math::check_if_included(this->total_node, node_id)) {
     std::cout << "node_id = "<< node_id << " is not a node of the tree!" << std::endl;
     exit(1);

@@ -84,7 +84,7 @@ struct Matrix {
       return false;
   }
 
-  void set(UINT i, UINT j, T value) {
+  void set(const UINT i, const UINT j, const T value) {
     if (!(i >= 0U && i < this->n_row)) {
       std::cout << "i = " << i << "must satisfy: " << i << " >= 0 && " << i << " < " << this->n_row << std::endl;
       exit(1);
@@ -96,7 +96,7 @@ struct Matrix {
     this->elements[j + i * this->n_column] = value;
   }
 
-  void set(const std::string& str, UINT j, const std::vector<T>& values) {
+  void set(const std::string& str, const UINT j, const std::vector<T>& values) {
     if (str != ":") {
       std::cout << "the 1st parameter must be \":\"!" << std::endl;
       exit(1);
@@ -109,7 +109,7 @@ struct Matrix {
       set(i, j, values[i]);
   }
 
-  void set(UINT i, const std::string& str, const std::vector<T>& values) {
+  void set(const UINT i, const std::string& str, const std::vector<T>& values) {
     if (str != ":") {
       std::cout << "the 1st parameter must be \":\"!" << std::endl;
       exit(1);
@@ -123,7 +123,7 @@ struct Matrix {
   }
 
   // get the element at (i, j)
-  T operator() (UINT i, UINT j) {
+  T operator() (const UINT i, const UINT j) {
     if (!(i >= 0U && i < this->n_row)) {
       std::cout << "i = " << i << "must satisfy: " << i << " >= 0 && " << i << " < " << this->n_row << std::endl;
       exit(1);
@@ -136,7 +136,7 @@ struct Matrix {
   }
 
   // get the special element at (i, j)
-  T* operator() (UINT i, UINT j, bool special) {
+  T* operator() (const UINT i, const UINT j, bool special) {
     if (special) {
       if (!(i >= 0U && i < this->n_row)) {
         std::cout << "i = " << i << "must satisfy: " << i << " >= 0 && " << i << " < " << this->n_row << std::endl;
@@ -153,7 +153,7 @@ struct Matrix {
   }
 
   // get the j-th column std::vector
-  std::vector<T> operator() (const std::string& str, UINT j) {
+  std::vector<T> operator() (const std::string& str, const UINT j) {
     if (str != ":") {
       std::cout << "the 1st parameter must be \":\"!" << std::endl;
       exit(1);
@@ -169,8 +169,7 @@ struct Matrix {
   }
 
   // get the j-th column std::vector
-  std::vector<T> operator() (const IntVector& ids, UINT j)
-  {
+  std::vector<T> operator() (const IntVector& ids, const UINT j) {
     std::vector<T> temp;
     if (!(j >= 0U && j < this->n_column)) {
       std::cout << "j = " << j << "must satisfy: " << j << " >= 0 && " << j << " < " << this->n_column << std::endl;
@@ -188,8 +187,7 @@ struct Matrix {
   }
 
   // get the i-th row std::vector
-  std::vector<T> operator() (UINT i, const std::string& str) const
-  {
+  std::vector<T> operator() (const UINT i, const std::string& str) const {
     if (str != ":") {
       std::cout << "the 2nd parameter must be \":\"!" << std::endl;
       exit(1);
@@ -202,8 +200,7 @@ struct Matrix {
   }
 
   // get the i-th row std::vector
-  std::vector<T> operator() (UINT i, const IntVector& ids)
-  {
+  std::vector<T> operator() (const UINT i, const IntVector& ids) {
     if (!(i >= 0U && i < this->n_row)) {
       std::cout << "i = " << i << "must satisfy: " << i << " >= 0 && " << i << " < " << this->n_row << std::endl;
       exit(1);
@@ -240,7 +237,7 @@ struct Matrix {
   }
 
   // overload operator "+"
-  Matrix operator+ (Matrix& right) {
+  Matrix operator+ (const Matrix& right) {
     if (!hasSameSize(right)) {
       std::cout << "the two matrixes must have same size!" << std::endl;
       exit(1);
@@ -253,7 +250,7 @@ struct Matrix {
   }
 
   // overload operator "-"
-  Matrix operator- (Matrix& right) {
+  Matrix operator- (const Matrix& right) {
     if (!hasSameSize(right)) {
       std::cout << "the two matrixes must have same size!" << std::endl;
       exit(1);
@@ -266,7 +263,7 @@ struct Matrix {
   }
 
   // overload operator "*"
-  Matrix operator* (T scale) {
+  Matrix operator* (const T scale) {
     Matrix temp(this->n_row, this->n_column);
 
     for (UINT i = 0; i < this->n_row * this->n_column; i++)
@@ -284,7 +281,7 @@ struct Matrix {
     return this->elements;
   }
 
-  std::vector<T> sum(UINT axis) {
+  std::vector<T> sum(const UINT axis) {
     std::vector<T> sum_temp;
     if (axis == 0U) {
       for (UINT i = 0; i < this->n_row; i++) {
@@ -387,7 +384,7 @@ std::vector<T> operator+ (const std::vector<T>& left, const std::vector<T>& righ
 
 // overload operator "+"
 template<typename T>
-std::vector<T> operator+ (const std::vector<T>& left, T right) {
+std::vector<T> operator+ (const std::vector<T>& left, const T right) {
   std::vector<T> temp;
   for (auto left_value : left)
     temp.push_back(left_value + right);
@@ -421,7 +418,7 @@ void operator-= (std::vector<T>& left, const std::vector<T>& right) {
 
 // overload operator "-"
 template<typename T>
-std::vector<T> operator- (const std::vector<T>& left, T right) {
+std::vector<T> operator- (const std::vector<T>& left, const T right) {
   std::vector<T> temp;
   for (UINT i = 0; i < left.size(); i++)
     temp.push_back(left[i] - right);
@@ -430,13 +427,13 @@ std::vector<T> operator- (const std::vector<T>& left, T right) {
 
 // overload operator "-="
 template<typename T>
-void operator-= (std::vector<T>& left, T right) {
+void operator-= (std::vector<T>& left, const T right) {
   left = left - right;
 }
 
 // overload operator "*"
 template<typename T>
-std::vector<T> operator* (const std::vector<T>& left, T right) {
+std::vector<T> operator* (const std::vector<T>& left, const T right) {
   std::vector<T> temp;
   for (UINT i = 0; i < left.size(); i++)
     temp.push_back(left[i] * right);
@@ -445,7 +442,7 @@ std::vector<T> operator* (const std::vector<T>& left, T right) {
 
 // overload operator "*"
 template<typename T>
-std::vector<T> operator* (T left, const std::vector<T>& right) {
+std::vector<T> operator* (const T left, const std::vector<T>& right) {
   std::vector<T> temp;
   for (auto right_value : right)
     temp.push_back(left * right_value);
@@ -454,7 +451,7 @@ std::vector<T> operator* (T left, const std::vector<T>& right) {
 
 // overload operator "/"
 template<typename T>
-std::vector<T> operator/ (const std::vector<T>& left, T right) {
+std::vector<T> operator/ (const std::vector<T>& left, const T right) {
   std::vector<T> temp;
   for (auto value : left)
     temp.push_back(value / right);
@@ -486,7 +483,7 @@ T sum2(const std::vector<T>& vec) {
 }
 
 template<typename T>
-std::vector<T> range(T start, T end, T step = 1U) {
+std::vector<T> range(const T start, const T end, const T step = 1U) {
   if (start > end) {
     std::cout << "the start = " << start << " must be less than the end = " << end << std::endl;
     exit(1);
@@ -502,7 +499,7 @@ std::vector<T> range(T start, T end, T step = 1U) {
 }
 
 template<typename T>
-std::vector<T> ones(UINT length) {
+std::vector<T> ones(const UINT length) {
   if (length < 0U) {
     std::cout << "the length must be positive!" << std::endl;
     exit(1);
@@ -514,7 +511,7 @@ std::vector<T> ones(UINT length) {
 }
 
 template<typename T>
-std::vector<T> zeros(UINT length) {
+std::vector<T> zeros(const UINT length) {
   if (length < 0U) {
     std::cout << "the length must be positive!" << std::endl;
     exit(1);
@@ -533,7 +530,7 @@ std::vector<T> shuffle(const std::vector<T>& source) {
 }
 
 template<typename T>
-IntVector find(const std::vector<T>& vec, T element) {
+IntVector find(const std::vector<T>& vec, const T element) {
   IntVector ids;
   for (UINT i = 0; i < vec.size(); i++) {
     if (vec[i] == element)
@@ -543,7 +540,7 @@ IntVector find(const std::vector<T>& vec, T element) {
 }
 
 template<typename T>
-bool delete_id(std::vector<T>& vec, UINT id) {
+bool delete_id(std::vector<T>& vec, const UINT id) {
   if (id >= vec.size()) {
     std::cout << "beyond the upper bound!" << std::endl;
     return false;
@@ -559,7 +556,7 @@ bool delete_id(std::vector<T>& vec, UINT id) {
 }
 
 template<typename T>
-bool delete_element(std::vector<T>& vec, T element) {
+bool delete_element(std::vector<T>& vec, const T element) {
   bool op = false;
   IntVector ids = find(vec, element);
   if (ids.empty())
@@ -603,7 +600,7 @@ T mean(const std::vector<T>& vec) {
 }
 
 template<typename T>
-T variance(const std::vector<T>& vec, T mean) {
+T variance(const std::vector<T>& vec, const T mean) {
   if (vec.size() <= 1U) {
     std::cout << "the length of vector must be larger than one!" << std::endl;
     exit(1);
@@ -680,7 +677,7 @@ std::vector<T> softmax(const std::vector<T>& vec) {
 }
 
 template<typename T>
-void replace(std::vector<T>& output, const std::vector<T>& input, UINT start) {
+void replace(std::vector<T>& output, const std::vector<T>& input, const UINT start) {
   if (output.size() < input.size() + start) {
     std::cout << "output.size() < input.size() + start !" << std::endl;
     exit(1);
@@ -706,7 +703,7 @@ BoolVector compare_if(const std::vector<T>& vec, const std::string& compare_symb
 }
 
 template<typename T>
-IntVector choose_ids(const std::vector<T>& vec, T split, const std::string& compare_symbol) {
+IntVector choose_ids(const std::vector<T>& vec, const T split, const std::string& compare_symbol) {
   IntVector temp;
   if (compare_symbol == "<=") {
     for (UINT i = 0; i < vec.size(); i++) {
@@ -752,7 +749,7 @@ std::string toString(const std::vector<std::vector<T>>& vec_vec) {
 }
 
 template<typename T>
-bool check_if_included(const std::vector<T>& vec, T value) {
+bool check_if_included(const std::vector<T>& vec, const T value) {
   auto iter = std::find(vec.begin(), vec.end(), value);
   if (iter == vec.end())
     return false;
@@ -821,7 +818,7 @@ bool check_if_included(const std::map<T1, T2>& input, const T1& key) {
 }
 
 template<typename T1, typename T2>
-T2 at(const std::map<T1, T2>& input, T1 key) {
+T2 at(const std::map<T1, T2>& input, const T1 key) {
   auto iter = input.find(key);
   if (iter == input.end()) {
     std::cout << "the key is not included in map!" << std::endl;
@@ -831,7 +828,7 @@ T2 at(const std::map<T1, T2>& input, T1 key) {
 }
 
 template<typename T1, typename T2>
-shared_ptr<T2> at(const std::map<T1, shared_ptr<T2>>& input, T1 key) {
+shared_ptr<T2> at(const std::map<T1, shared_ptr<T2>>& input, const T1 key) {
   auto iter = input.find(key);
   if (iter == input.end()) {
     std::cout << "the key is not included in map!" << std::endl;
@@ -872,12 +869,12 @@ std::string toString(const std::map<T1, T2>& input) {
 }
 
 template<typename T>
-bool check_if_included(const std::set<T>& source, T value) {
+bool check_if_included(const std::set<T>& source, const T value) {
   return source.end() != source.find(value);
 }
 
 template<typename T>
-T absolute(T a) {
+T absolute(const T a) {
   if (a >= T(0))
     return a;
   else
@@ -885,7 +882,7 @@ T absolute(T a) {
 }
 
 template<typename T>
-std::string operator* (const std::string& str, T n_time) {
+std::string operator* (const std::string& str, const T n_time) {
   std::string str_temp = "";
   for (auto i = 0U; i < n_time; i++)
     str_temp += str;

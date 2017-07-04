@@ -200,15 +200,13 @@ struct Cache {
   double log_n_dim;
 };
 
-enum MoveType {GROW=0, PRUNE, CHANGE, SWAP};
-
 struct NodePair {
   UINT parent;
   UINT child;
 
   NodePair(): parent(0U), child(0U){}
   NodePair(UINT parent, UINT child): parent(parent), child(child){}
-  bool operator==(const NodePair& other) { 
+  bool operator==(const NodePair& other) const { 
     return this->parent == other.parent && this->child == other.child;
   }
   void operator=(const NodePair& other) {
