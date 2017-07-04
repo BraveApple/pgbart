@@ -104,8 +104,7 @@ UINT Tree::getParentNodeID(UINT node_id) const {
     exit(1);
   }
   if (node_id == 0) {
-    std::cout << "node_id = " << node_id << " is a root node, so it does not have parent node!" << std::endl;
-    exit(1);
+    return 0;
   }
   UINT parent_id = static_cast<UINT>(std::ceil(node_id / 2.0) - 1);
   return parent_id;
