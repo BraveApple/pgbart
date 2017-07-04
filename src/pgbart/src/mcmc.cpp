@@ -123,7 +123,7 @@ tuple<Particle_Ptr, bool> run_particle_mcmc_single_tree(const Control& control,
 namespace pgbart {
 
 TreeMCMC::TreeMCMC(const IntVector& train_ids, const Param& param, const Control& control, 
-  const CacheTemp& cache_temp): State(train_ids, param, cache_temp){
+  const CacheTemp& cache_temp): State(train_ids, param, cache_temp) {
 
   this->inner_pc_paires.clear(); // list of nodes where both parent/child are non-terminal
   this->both_children_terminal.clear();
@@ -234,6 +234,7 @@ double TreeMCMC::compute_log_inv_acc_p(const int node_id, const Param& param, co
 
 bool TreeMCMC::grow(const Data& train_data, const Control& control, const Param& param, const Cache& cache,
     const IntVector& grow_nodes) {
+  
   bool change = false;
   if (grow_nodes.size() == 0)
     return change;
@@ -280,6 +281,7 @@ bool TreeMCMC::grow(const Data& train_data, const Control& control, const Param&
 
 bool TreeMCMC::prune(const Data& train_data, const Control& control, const Param& param, const Cache& cache,
     const IntVector& grow_nodes) {
+  
   bool change = false;
   if (this->both_children_terminal.size() == 0) {
     return change;
@@ -329,6 +331,7 @@ bool TreeMCMC::prune(const Data& train_data, const Control& control, const Param
 
 bool TreeMCMC::change(const Data& train_data, const Control& control, const Param& param, const Cache& cache,
     const IntVector& grow_nodes) {
+  
   bool change = false;
   if (this->tree_ptr->non_leaf_nodes.size()) {
     return change;
@@ -364,6 +367,7 @@ bool TreeMCMC::change(const Data& train_data, const Control& control, const Para
 
 bool TreeMCMC::swap(const Data& train_data, const Control& control, const Param& param, const Cache& cache,
   const IntVector& grow_nodes) {
+  
   bool change = false;
   if (this->inner_pc_pairs.size() == 0) {
     return change;
@@ -393,6 +397,7 @@ bool TreeMCMC::swap(const Data& train_data, const Control& control, const Param&
 
 bool TreeMCMC::sample(const Data& train_data, const Control& control, const Param& param, 
   const Cache& cache) {
+  
   MoveType move_type = simulate_discrete_uniform_distribution(0, 3);
   double log_acc = -DBL_MAX;
   double log_r = 0.0;
@@ -421,7 +426,7 @@ bool TreeMCMC::sample(const Data& train_data, const Control& control, const Para
   return change;
 }
 
-bool TreeMCMC::check_if_same(const double log_acc, const double loglik_diff, const double logprior_diff){
+bool TreeMCMC::check_if_same(const double log_acc, const double loglik_diff, const double logprior_diff) {
 	double loglik_diff_2, logprior_diff_2, log_acc_2, node_id;
 	UINT leaf_legnth = this->tree_ptr->leaf_node_ids.size();
 	double sum1 = 0, sum2 = 0;
@@ -478,7 +483,7 @@ tuple<double, double, double> TreeMCMC::compute_log_acc_cs(const IntVector& node
 	return make_tuple(log_acc, loglik_diff, logprior_diff);
 }
 
-void TreeMCMC::create_new_statistics(const IntVector& nodes_subtree, const IntVector& nodes_not_in_subtree){
+void TreeMCMC::create_new_statistics(const IntVector& nodes_subtree, const IntVector& nodes_not_in_subtree) {
 	this->node_info_new = this->node_info;
 	UINT not_length = nodes_not_in_subtree.size();
 	for (UINT i = 0; i < not_length; i++){
@@ -506,8 +511,10 @@ void TreeMCMC::create_new_statistics(const IntVector& nodes_subtree, const IntVe
 	}
 }
 
-void TreeMCMC::evaluate_new_subtree(const Data& train_data, const UINT node_id_start, const Param& param, const IntVector& nodes_subtree, const Cache& cache, const Control& control){
-	for (UINT i : this->train_ids[node_id_start]){
+void TreeMCMC::evaluate_new_subtree(const Data& train_data, const UINT node_id_start, const Param& param, 
+  const IntVector& nodes_subtree, const Cache& cache, const Control& control){
+	
+  for (UINT i : this->train_ids[node_id_start]){
 		IntVector x_ = train_data.x(i, ":");
 		double y_ = train_data.y_original[i];
 		UINT node_id = node_id_start;
@@ -530,8 +537,9 @@ void TreeMCMC::evaluate_new_subtree(const Data& train_data, const UINT node_id_s
 		}
 	}
 
-	CacheTemp_Ptr cache_temp_ptr(new CacheTemp());
-	for (UINT node_id : nodes_subtree){
+	// CacheTemp_Ptr cache_temp_ptr(new CacheTemp());
+	CacheTemp_Ptr cache_temp_ptr = make_shared<CacheTemp>();
+  for (UINT node_id : nodes_subtree){
 		this->loglik_new[node_id] = -__DBL_MAX__;
 		if (this->n_points_new[node_id] > 0){
 			
@@ -557,7 +565,7 @@ void TreeMCMC::evaluate_new_subtree(const Data& train_data, const UINT node_id_s
 	}
 }
 
-void TreeMCMC::update_subtree(const IntVector& nodes_subtree){
+void TreeMCMC::update_subtree(const IntVector& nodes_subtree) {
 	UINT subtree_length = nodes_subtree.size();
 	for (UINT i = 0; i < subtree_length; i++){
 		UINT node_id = nodes_subtree[i];
@@ -572,7 +580,8 @@ void TreeMCMC::update_subtree(const IntVector& nodes_subtree){
 	}
 }
 
-void TreeMCMC::recompute_prob_split(const Data& train_data, const Param& param, const Control& control, const Cache& cache, const UINT node_id) {
+void TreeMCMC::recompute_prob_split(const Data& train_data, const Param& param, const Control& control, 
+  const Cache& cache, const UINT node_id) {
 	const IntVector& train_ids = this->train_ids_new[node_id];
 	if (stop_split(train_ids, control, train_data, cache)) {
 		this->logprior_new[node_id] = -__DBL_MAX__;
