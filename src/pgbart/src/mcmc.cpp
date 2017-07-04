@@ -424,10 +424,10 @@ bool TreeMCMC::sample(const Data& train_data, const Control& control, const Para
   std::cout << "\n\ngrow_nodes.size = " << grow_nodes.size() << "\n\n";
 
   switch(move_type) {
-  case 0: change = this->grow(train_data, control, param, cache, grow_nodes); break;
-  case 1: change = this->prune(train_data, control, param, cache, grow_nodes); break;
-  case 2: change = this->change(train_data, control, param, cache, grow_nodes); break;
-  case 3: change = this->swap(train_data, control, param, cache, grow_nodes); break;
+    case 0: { change = this->grow(train_data, control, param, cache, grow_nodes); break; }
+    case 1: { change = this->prune(train_data, control, param, cache, grow_nodes); break; }
+    case 2: { change = this->change(train_data, control, param, cache, grow_nodes); break; }
+    case 3: { change = this->swap(train_data, control, param, cache, grow_nodes); break; }
     default: { std::cout << "Error move type!" << std::endl; exit(1); }
   }
 
