@@ -667,7 +667,7 @@ TreeMCMC_Ptr init_cgm_mcmc(const Data& train_data, const Control& control, const
 }
 
 tuple<TreeMCMC_Ptr, bool> run_cgm_mcmc_single_tree(TreeMCMC_Ptr tree_mcmc_ptr, const Control& control,
-  const Data& train_data, const Param& param, const Cache& cache) {
+	const Data& train_data, const Param& param, const Cache& cache, const CacheTemp& cache_temp){
 
   const bool change = tree_mcmc_ptr->sample(train_data, control, param, cache);
   return make_tuple(tree_mcmc_ptr, change);
