@@ -257,7 +257,7 @@ Rcpp::List train(NumericMatrix& train_data, NumericVector& train_label, bool if_
   		vector_loglik_train[i_loglik_train] = loglik_train; i_loglik_train++;
   		cout << "itr: " << itr - nskip + 1 << "  mse_train = " << mse_train << ", loglik_train = " << loglik_train << endl;
 
-		pgbart_model.add_itr(bart);
+		pgbart_model.add_itr(bart, control);
 
       for (UINT j = 0; j < data_train.x.n_row; j++) {
         matrix_yhat_train(i_yhat_train, j) = bart.pred_val_sum_train[j];

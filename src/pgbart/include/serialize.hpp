@@ -31,18 +31,30 @@ UINT n_iteration;
 UINT current_itr;
 vector<vector<BartTree>> trees;
 
-  Model(double _mean, UINT _m_bart, UINT _n_iteration) : train_mean(_mean), m_bart(_m_bart), trees(_n_iteration), n_iteration(_n_iteration), current_itr(0) {}
+Model(double _mean, UINT _m_bart, UINT _n_iteration) : train_mean(_mean), m_bart(_m_bart), trees(_n_iteration), n_iteration(_n_iteration), current_itr(0) {}
 
-void add_itr(Bart& bart){
-  trees[current_itr].resize(m_bart);
-  for (UINT i = 0; i < m_bart; i++) {
-    trees[current_itr][i].leaf_node_ids = bart.p_particles[i]->tree_ptr->leaf_node_ids;
-    trees[current_itr][i].non_leaf_node_ids = bart.p_particles[i]->tree_ptr->non_leaf_node_ids;
-    trees[current_itr][i].pred_val = bart.p_particles[i]->tree_ptr->pred_val_n;
-    trees[current_itr][i].node_info = bart.p_particles[i]->node_info;
+void add_itr(Bart& bart, const Control& control){
+  this->trees[current_itr].resize(m_bart);
+  if (control.mcmc_type == "pg") {
+    for (UINT i = 0; i < m_bart; i++) {
+      this->trees[current_itr][i].leaf_node_ids = bart.p_particles[i]->tree_ptr->leaf_node_ids;
+      this->trees[current_itr][i].non_leaf_node_ids = bart.p_particles[i]->tree_ptr->non_leaf_node_ids;
+      this->trees[current_itr][i].pred_val = bart.p_particles[i]->tree_ptr->pred_val_n;
+      this->trees[current_itr][i].node_info = bart.p_particles[i]->node_info;
+    }
+    current_itr++;
   }
-  current_itr++;
+  else if (control.mcmc_type == "cgm") {
+    for (UINT i = 0; i < m_bart; i++) {
+      this->trees[current_itr][i].leaf_node_ids = bart.p_treemcmcs[i]->tree_ptr->leaf_node_ids;
+      this->trees[current_itr][i].non_leaf_node_ids = bart.p_treemcmcs[i]->tree_ptr->non_leaf_node_ids;
+      this->trees[current_itr][i].pred_val = bart.p_treemcmcs[i]->tree_ptr->pred_val_n;
+      this->trees[current_itr][i].node_info = bart.p_treemcmcs[i]->node_info;
+    }
+    current_itr++;
+  }
 }
+
 };
 
 void save_model(const string& savepath, const Model& model){

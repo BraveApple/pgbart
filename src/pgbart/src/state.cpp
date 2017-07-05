@@ -226,8 +226,7 @@ void State::update_left_right_statistics(const UINT& node_id, const double& logp
 void State::remove_leaf_node_statistics(const UINT& node_id) {
   if (!delete_element(tree_ptr->leaf_node_ids, node_id)) {
     std::cout << "ERROR: fail to delete \"node_id = " << node_id << "\"!" << std::endl;  
-  }
-  else {
+  } else {
     math::delete_by_key(this->loglik, node_id);
     math::delete_by_key(this->train_ids, node_id);
     math::delete_by_key(this->logprior, node_id);
@@ -324,8 +323,7 @@ tuple<bool, SplitInfo_Ptr, double>
     split_info_ptr->split_chosen = 3.14; // i like pi :)
     split_info_ptr->idx_split_global = -1;
     logprior_nodeid = 0.0;
-  }
-  else {
+  } else {
     do_not_split_node_id = false;
     IntVector_Ptr feat_id_perm_ptr;
     UINT n_feat;
@@ -341,7 +339,7 @@ tuple<bool, SplitInfo_Ptr, double>
     UINT idx_max = demension_info_ptr->idx_max;
     DoubleVector& feat_score_cumsum_prior_current = demension_info_ptr->feat_score_cumsum_prior_current;
     double z_prior = feat_score_cumsum_prior_current[idx_max] - feat_score_cumsum_prior_current[idx_min];
-    DoubleVector prob_split_prior = diff(at(feat_score_cumsum_prior_current, range(idx_min, idx_max))
+    DoubleVector prob_split_prior = diff(at(feat_score_cumsum_prior_current, range(idx_min, idx_max + 1))
       - feat_score_cumsum_prior_current[idx_min]) / z_prior;
     UINT idx_split_chosen = sample_multinomial_distribution(prob_split_prior);
     UINT idx_split_global = idx_split_chosen + idx_min + 1;

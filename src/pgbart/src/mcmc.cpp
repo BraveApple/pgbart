@@ -215,7 +215,7 @@ double TreeMCMC::compute_log_inv_acc_p(const int node_id, const Param& param, co
     logprior_children += std::log(compute_not_split_prob(this->tree_ptr, right, param));
   }
 
-  if (compare::compare_if_zero(logprior_children - this->logprior[left] - this->logprior[right])) {
+  if (!compare::compare_if_zero(logprior_children - this->logprior[left] - this->logprior[right])) {
     std::cout << "oh oh ... looks like a bug in compute_log_inv_acc_p" << std::endl;
     exit(1);
   }
@@ -226,7 +226,7 @@ double TreeMCMC::compute_log_inv_acc_p(const int node_id, const Param& param, co
   const double log_inv_acc_loglik = loglik - this->loglik[node_id];
   const double log_inv_acc = log_inv_acc_loglik + log_inv_acc_prior;
 
-  if (log_inv_acc > -BART_DBL_MAX) {
+  if (log_inv_acc <= -BART_DBL_MAX) {
     std::cout << "Error" << std::endl;
   }
   return log_inv_acc;
@@ -322,7 +322,7 @@ bool TreeMCMC::prune(const Data& train_data, const Control& control, const Param
     // MCMC specific data structure updates
     math::delete_element<UINT>(this->both_children_terminal, node_id);
     const int parent = this->tree_ptr->getParentNodeID(node_id);
-    if (node_id != 0 && this->tree_ptr->isNonLeafNode(node_id)) {
+    if (node_id != 0 && this->tree_ptr->isNonLeafNode(parent)) {
       math::delete_element<NodePair>(this->inner_pc_pairs, NodePair(parent, node_id));
     }
     if (node_id != 0) {

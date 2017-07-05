@@ -84,7 +84,8 @@ public:
   void update_loglik_node_all(const Data& data, const Param& param, const Cache& cache, const Control& control);
 
 };
-}
+
+} // namespace pgbart
 
 namespace pgbart {
 double compute_nn_loglik(double x, double mu, double prec, double log_const);
@@ -132,6 +133,7 @@ double compute_not_split_prob(const shared_ptr<Tree> tree_ptr, const size_t& nod
 void compute_normal_normalizer(const Param& param, const Cache& cache, CacheTemp& cache_temp, const string& str_node = "parent");
 
 DimensionInfo_Ptr get_info_dimension(const Data& data_train, const Cache& cache, const IntVector& train_ids, const UINT& feat_id);
-}
+
+} // namespace pgbart
 
 #endif

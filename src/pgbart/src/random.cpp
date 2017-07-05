@@ -44,8 +44,6 @@ double simulate_gamma_distribution(double alpha, double beta) {
   return gamma(generator);
 }
 
-
-
 UINT sample_multinomial_distribution(const DoubleVector& probs) {
   double prob = simulate_continuous_uniform_distribution(0.0, 1.0);
   DoubleVector sum = math::cumsum(probs);
@@ -66,8 +64,7 @@ UINT sample_multinomial_distribution(const DoubleVector& probs) {
 
 IntVector sample_multinomial_distribution(const DoubleVector& probs, const UINT& n_time) {
   IntVector temp(probs.size(), 0);
-  for (size_t i = 0; i < n_time; i++)
-  {
+  for (size_t i = 0; i < n_time; i++) {
     UINT k = sample_multinomial_distribution(probs);
     temp[k]++;
   }
