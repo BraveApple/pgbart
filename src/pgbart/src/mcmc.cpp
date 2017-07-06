@@ -426,8 +426,7 @@ bool TreeMCMC::sample(const Data& train_data, const Control& control, const Para
   // double log_acc = -BART_DBL_MAX;
   // double log_r = 0.0;
   IntVector grow_nodes;
-  for (UINT i = 0; i < this->tree_ptr->leaf_node_ids.size(); i++) {
-    const int leaf_node_id = this->tree_ptr->leaf_node_ids[i];
+  for (auto leaf_node_id : this->tree_ptr->leaf_node_ids) {
     if (!stop_split(this->train_ids[leaf_node_id], control, train_data, cache)) {
       grow_nodes.push_back(leaf_node_id);
     }
@@ -448,12 +447,10 @@ bool TreeMCMC::sample(const Data& train_data, const Control& control, const Para
   if (change) {
     this->tree_ptr->updateTreeDepth();
     this->loglik_current = 0.0;
-    for (auto node_id : this->tree_ptr->leaf_node_ids) {
-      this->loglik_current += this->loglik[node_id];
+    for (auto leaf_node_id : this->tree_ptr->leaf_node_ids) {
+      this->loglik_current += this->loglik[leaf_node_id];
     }
   }
-
-
   return change;
 }
 
