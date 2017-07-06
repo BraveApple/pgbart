@@ -275,6 +275,8 @@ bool TreeMCMC::grow(const Data& train_data, const Control& control, const Param&
     // MCMC specific data structure updates
     this->both_children_terminal.push_back(node_id);
     const int parent_id = this->tree_ptr->getParentNodeID(node_id);
+    // Modified by Wang
+    // if (node_id != 0 && this->tree_ptr->isNonLeafNode(node_id))
     if (node_id != 0 && this->tree_ptr->isNonLeafNode(parent_id)) {
       this->inner_pc_pairs.push_back(NodePair(parent_id, node_id));
     }
@@ -295,6 +297,8 @@ bool TreeMCMC::prune(const Data& train_data, const Control& control, const Param
   if (this->both_children_terminal.size() == 0) {
     return change;
   }
+  // Modified by Bai
+  // const int node_id = random_choice(this->both_children_terminal)
   const int node_id = ramdom_choice(this->both_children_terminal);
   // const int feat_id = this->node_info[node_id].feat_id_chosen;
   const int left = this->tree_ptr->getLeftNodeID(node_id);
@@ -305,9 +309,15 @@ bool TreeMCMC::prune(const Data& train_data, const Control& control, const Param
   grow_nodes_temp.push_back(node_id);
   if (math::check_if_included<UINT>(grow_nodes_temp, left)) {
     math::delete_element<UINT>(grow_nodes_temp, left);
+  } else {
+    std::cout << "ValueError" << std::endl;
+    exit(1);
   }
   if (math::check_if_included<UINT>(grow_nodes_temp, right)) {
     math::delete_element<UINT>(grow_nodes_temp, right);
+  } else {
+    std::cout << "ValueError" << std::endl;
+    exit(1);
   }
   const double log_acc = -1.0 * this->compute_log_inv_acc_p(node_id, param, len_both_children_terminal_new,
     loglik, grow_nodes_temp, cache, control, train_data);
