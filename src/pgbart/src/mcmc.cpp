@@ -557,7 +557,7 @@ void TreeMCMC::evaluate_new_subtree(const Data& train_data, const UINT node_id_s
     // const double y_ = train_data.y_original[i];
     const double y_ = train_data.y_residual[i];
 		UINT node_id = node_id_start;
-		while (true){
+		while (true) {
 			this->sum_y_new[node_id] += y_;
 			this->sum_y2_new[node_id] += y_ * y_;
 			this->n_points_new[node_id] += 1;
@@ -578,9 +578,9 @@ void TreeMCMC::evaluate_new_subtree(const Data& train_data, const UINT node_id_s
 
 	// CacheTemp_Ptr cache_temp_ptr(new CacheTemp());
 	CacheTemp_Ptr cache_temp_ptr = make_shared<CacheTemp>();
-  for (UINT node_id : nodes_subtree){
+  for (UINT node_id : nodes_subtree) {
 		this->loglik_new[node_id] = -BART_DBL_MAX;
-		if (this->n_points_new[node_id] > 0){
+		if (this->n_points_new[node_id] > 0) {
 
 			cache_temp_ptr->n_points = this->n_points_new[node_id];
 			cache_temp_ptr->sum_y = this->sum_y_new[node_id];
@@ -593,12 +593,10 @@ void TreeMCMC::evaluate_new_subtree(const Data& train_data, const UINT node_id_s
 		if (check_if_included(this->tree_ptr->leaf_node_ids, node_id)){
 			if (stop_split(this->train_ids_new[node_id], control, train_data, cache)){
 				this->logprior_new[node_id] = 0;
-			}
-			else{
+			} else { 
 				this->logprior_new[node_id] = std::log(compute_not_split_prob(this->tree_ptr, node_id, param));
 			}
-		}
-		else{
+		} else {
 			this->recompute_prob_split(train_data, param, control, cache, node_id);
 		}
 	}
@@ -669,17 +667,6 @@ void TreeMCMC::recompute_prob_split(const Data& train_data, const Param& param, 
 				double logprior_nodeid_tau = std::log(prob_split_prior[idx_split_chosen]);
 				double log_psplit = std::log(compute_split_prob(this->tree_ptr, node_id, param));
 				this->logprior_new[node_id] = log_psplit + logprior_nodeid_tau + log_prob_feat[feat_id_chosen];
-				// if (control.verbose >= 3) {
-				// 	std::cout << "3 terms in recompute for node_id = " << node_id << "; "
-				// 		<< log_psplit << "; " << logprior_nodeid_tau << "; " << log_prob_feat[feat_id_chosen] << std::endl;
-				// 	std::cout << "feat_id = " << feat_id_chosen << ", idx_split_chosen = "
-				// 		<< idx_split_chosen << ", split_chosen = " << split_chosen << std::endl;
-				// 	std::cout << "log prob_split_prior = ";
-				// 	for (double prob : prob_split_prior) {
-				// 		std::cout << std::log(prob) << " ";
-				// 	}
-				// 	std::cout << std::endl;
-				// }
 			}
 		}
 	}
