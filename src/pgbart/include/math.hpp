@@ -43,9 +43,7 @@ struct Matrix {
   UINT n_row;
   UINT n_column;
 
-  Matrix() : n_row(0), n_column(0) {
-    this->elements = std::vector<T>();
-  }
+  Matrix() : n_row(0), n_column(0), elements(std::vector<T>()) {}
 
   Matrix(UINT n_row, UINT n_column) {
     this->elements = std::vector<T>(n_row * n_column, T(0));
@@ -77,7 +75,7 @@ struct Matrix {
     this->elements = m.elements;
   }
 
-  bool hasSameSize(Matrix& m) {
+  bool hasSameSize(const Matrix& m) {
     if (this->n_row == m.n_row && this->n_column = m.n_column)
       return true;
     else
@@ -86,11 +84,11 @@ struct Matrix {
 
   void set(const UINT i, const UINT j, const T value) {
     if (!(i >= 0U && i < this->n_row)) {
-      std::cout << "i = " << i << "must satisfy: " << i << " >= 0 && " << i << " < " << this->n_row << std::endl;
+      std::cout << "i = " << i << " must satisfy: " << i << " >= 0 && " << i << " < " << this->n_row << std::endl;
       exit(1);
     }
     if (!(j >= 0U && j < this->n_column)) {
-      std::cout << "j = " << j << "must satisfy: " << j << " >= 0 && " << j << " < " << this->n_column << std::endl;
+      std::cout << "j = " << j << " must satisfy: " << j << " >= 0 && " << j << " < " << this->n_column << std::endl;
       exit(1);
     }
     this->elements[j + i * this->n_column] = value;
@@ -106,7 +104,7 @@ struct Matrix {
       exit(1);
     }
     for (UINT i = 0; i < this->n_row; i++)
-      set(i, j, values[i]);
+      this->set(i, j, values[i]);
   }
 
   void set(const UINT i, const std::string& str, const std::vector<T>& values) {
