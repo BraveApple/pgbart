@@ -39,9 +39,9 @@ namespace pgbart {
 
 template<typename T>
 struct Matrix {
-  std::vector<T> elements;
   UINT n_row;
   UINT n_column;
+  std::vector<T> elements;
 
   Matrix() : n_row(0), n_column(0), elements(std::vector<T>()) {}
 
