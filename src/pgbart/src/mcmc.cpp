@@ -147,7 +147,7 @@ IntVector_Ptr TreeMCMC::get_nodes_not_in_subtree(const int node_id) {
   IntVector_Ptr subtree_ptr = this->get_nodes_subtree(node_id);
   for (auto it = all_nodes.begin(); it != all_nodes.end(); it++) {
     auto iter = std::find(subtree_ptr->begin(), subtree_ptr->end(), *it);
-    if (iter == subtree_ptr->end()) {
+    if (iter == subtree_ptr->end()) { // node not find in subtree
       reqd_nodes_ptr->push_back(*it);
     }
   }
@@ -345,13 +345,14 @@ bool TreeMCMC::change(const Data& train_data, const Control& control, const Para
   if (this->tree_ptr->non_leaf_node_ids.size() == 0) {
     return change;
   }
-  const int node_id = ramdom_choice(grow_nodes);
+  const int node_id = ramdom_choice(this->tree_ptr->non_leaf_node_ids);
   bool do_not_split_node_id; SplitInfo_Ptr split_info_ptr; double logprior_nodeid;
   tie(do_not_split_node_id, split_info_ptr, logprior_nodeid) =
     this->sample_split_prior(node_id, train_data, param, control, cache);
   // Note: this just samples a split criterion, not guaranteed to "change"
   if (do_not_split_node_id) {
     std::cout << "do not split node id" << std::endl;
+    exit(1);
   }
   IntVector_Ptr nodes_subtree_ptr = this->get_nodes_subtree(node_id);
   IntVector_Ptr nodes_not_in_subtree_ptr = this->get_nodes_not_in_subtree(node_id);
@@ -386,8 +387,8 @@ bool TreeMCMC::swap(const Data& train_data, const Control& control, const Param&
   IntVector_Ptr nodes_subtree_ptr = this->get_nodes_subtree(node_id);
   IntVector_Ptr nodes_not_in_subtree_ptr = this->get_nodes_not_in_subtree(node_id);
   this->create_new_statistics(*nodes_subtree_ptr, *nodes_not_in_subtree_ptr);
-  this->node_info_new[node_id] = this->node_info[node_id];
   this->node_info_new[node_id] = this->node_info[child_id];
+  this->node_info_new[child_id] = this->node_info[node_id];
   this->evaluate_new_subtree(train_data, node_id, param, *nodes_subtree_ptr, cache, control);
   double log_acc = 0; double loglik_diff = 0; double logprior_diff = 0;
   tie(log_acc, loglik_diff, logprior_diff) = this->compute_log_acc_cs(*nodes_subtree_ptr);
