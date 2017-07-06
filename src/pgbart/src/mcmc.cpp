@@ -275,7 +275,7 @@ bool TreeMCMC::grow(const Data& train_data, const Control& control, const Param&
     // MCMC specific data structure updates
     this->both_children_terminal.push_back(node_id);
     const int parent_id = this->tree_ptr->getParentNodeID(node_id);
-    if (node_id != 0 && this->tree_ptr->isNonLeafNode(node_id)) {
+    if (node_id != 0 && this->tree_ptr->isNonLeafNode(parent_id)) {
       this->inner_pc_pairs.push_back(NodePair(parent_id, node_id));
     }
     if (this->tree_ptr->isLeafNode(sibling_node_id)) {
