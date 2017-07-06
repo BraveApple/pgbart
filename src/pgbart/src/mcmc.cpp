@@ -367,6 +367,7 @@ bool TreeMCMC::change(const Data& train_data, const Control& control, const Para
   IntVector_Ptr nodes_subtree_ptr = this->get_nodes_subtree(node_id);
   IntVector_Ptr nodes_not_in_subtree_ptr = this->get_nodes_not_in_subtree(node_id);
   this->create_new_statistics(*nodes_subtree_ptr, *nodes_not_in_subtree_ptr);
+  // Modified by Wang
   // this->node_info_new[node_id] = this->node_info[node_id];
   this->node_info_new[node_id] = *split_info_ptr;
   this->evaluate_new_subtree(train_data, node_id, param, *nodes_subtree_ptr, cache, control);
