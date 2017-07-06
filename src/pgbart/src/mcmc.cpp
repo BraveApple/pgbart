@@ -552,7 +552,10 @@ void TreeMCMC::evaluate_new_subtree(const Data& train_data, const UINT node_id_s
 
   for (UINT i : this->train_ids[node_id_start]){
 		const DoubleVector x_ = train_data.x(i, ":");
-		const double y_ = train_data.y_original[i];
+		// y_ = data["y_train"][i]
+    // Modified by Wang
+    // const double y_ = train_data.y_original[i];
+    const double y_ = train_data.y_residual[i];
 		UINT node_id = node_id_start;
 		while (true){
 			this->sum_y_new[node_id] += y_;
