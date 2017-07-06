@@ -342,7 +342,7 @@ bool TreeMCMC::change(const Data& train_data, const Control& control, const Para
     const IntVector& grow_nodes) {
 
   bool change = false;
-  if (this->tree_ptr->non_leaf_node_ids.size()) {
+  if (this->tree_ptr->non_leaf_node_ids.size() == 0) {
     return change;
   }
   const int node_id = ramdom_choice(grow_nodes);
