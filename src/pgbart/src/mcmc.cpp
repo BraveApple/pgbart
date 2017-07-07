@@ -503,12 +503,11 @@ tuple<double, double, double> TreeMCMC::compute_log_acc_cs(const IntVector& node
 	
   UINT subtree_length = nodes_subtree.size();
 	// double sum_loglik_old = 0, sum_loglik_new = 0, sum_prior_old = 0, sum_prior_new = 0;
-  double sum_loglik_old = 0, sum_loglik_new = 0;
 	for (UINT i = 0; i < subtree_length; i++){
 		UINT node_id = nodes_subtree[i];
 		if (check_if_included(this->tree_ptr->leaf_node_ids, node_id)){
-			sum_loglik_old += this->loglik[node_id];
-			sum_loglik_new += this->loglik_new[node_id];
+			loglik_old += this->loglik[node_id];
+			loglik_new += this->loglik_new[node_id];
 		}
 		logprior_old += this->logprior[node_id];
 		logprior_new += this->logprior_new[node_id];
@@ -521,7 +520,17 @@ tuple<double, double, double> TreeMCMC::compute_log_acc_cs(const IntVector& node
 
 void TreeMCMC::create_new_statistics(const IntVector& nodes_subtree, const IntVector& nodes_not_in_subtree) {
 	this->node_info_new = this->node_info;
-	UINT not_length = nodes_not_in_subtree.size();
+  
+  this->loglik_new[node_id].clear();
+  this->logprior_new[node_id].clear();
+  this->train_ids_new[node_id].clear();
+  this->sum_y_new[node_id].clear();
+  this->sum_y2_new[node_id].clear();
+  this->n_points_new[node_id].clear();
+  this->mu_mean_post_new[node_id].clear();
+  this->mu_prec_post_new[node_id].clear();
+	
+  UINT not_length = nodes_not_in_subtree.size();
 	for (UINT i = 0; i < not_length; i++){
 		UINT node_id = nodes_not_in_subtree[i];
 		this->loglik_new[node_id] = this->loglik[node_id];
@@ -656,13 +665,8 @@ void TreeMCMC::recompute_prob_split(const Data& train_data, const Param& param, 
 				this->logprior_new[node_id] = -BART_DBL_MAX;
 			else {
 				double z_prior = feat_score_cumsum_prior_current[idx_max] - feat_score_cumsum_prior_current[idx_min];
-				DoubleVector prob_split_prior;
-				double tmp;
 				double offset = feat_score_cumsum_prior_current[idx_min];
-				for (UINT i = idx_min; i <= idx_max; i++) {
-					tmp = (feat_score_cumsum_prior_current[i] - offset) / z_prior;
-					prob_split_prior.push_back(tmp);
-				}
+        DoubleVector prob_split_prior = diff(at(feat_score_cumsum_prior_current, range(idx_min, idx_max + 1))- offset) / z_prior;
 				UINT idx_split_chosen = idx_split_global - idx_min - 1;
 				double logprior_nodeid_tau = std::log(prob_split_prior[idx_split_chosen]);
 				double log_psplit = std::log(compute_split_prob(this->tree_ptr, node_id, param));
