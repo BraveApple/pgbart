@@ -3,6 +3,7 @@
 
 #include <map>
 #include <vector>
+#include <queue>
 #include <iostream>
 
 #include "pgbart/include/data.hpp"
@@ -24,13 +25,13 @@ public:
   Particle_Ptr p_ptr;
   Pmcmc();
   Pmcmc(const Data& data, const Control& control, const Param& param, const Cache& cache,
-    const CacheTemp& cache_temp);
+    const CacheTemp& cache_temp, Random& pgrandom);
 
   bool update_p(Vec_Particle_Ptr particles_ptr, DoubleVector_Ptr log_weights_ptr, double& log_pd,
-    const Control& control);
+    const Control& control, Random& pgrandom);
 
   bool sample(const Data& data, const Control& control, const Param& param, const Cache& cache,
-    const CacheTemp& cache_tmp);
+    const CacheTemp& cache_tmp, Random& pgrandom);
 };
 
 } // namesapce pgbart
@@ -38,11 +39,11 @@ public:
 namespace pgbart{
 
 Pmcmc_Ptr init_particle_mcmc(const Data& data_train, const Control& control, const Param& param,
-  const Cache& cache, const CacheTemp& cache_temp);
+  const Cache& cache, const CacheTemp& cache_temp, Random& pgrandom);
 
 tuple<Particle_Ptr, bool> run_particle_mcmc_single_tree(const Control& control,
   const Data& data_train, const Param& param, const Cache& cache, bool change,
-  const CacheTemp& cache_temp, Pmcmc_Ptr pmcmc_ptr);
+  const CacheTemp& cache_temp, Pmcmc_Ptr pmcmc_ptr, Random& pgrandom);
 
 } // namespace pgbart
 
@@ -87,18 +88,18 @@ public:
     const Data& train_data);
 
   bool grow(const Data& train_data, const Control& control, const Param& param, const Cache& cache,
-    const IntVector& grow_nodes);
+    const IntVector& grow_nodes, Random& pgrandom);
 
   bool prune(const Data& train_data, const Control& control, const Param& param, const Cache& cache,
-    const IntVector& grow_nodes);
+    const IntVector& grow_nodes, Random& pgrandom);
 
   bool change(const Data& train_data, const Control& control, const Param& param, const Cache& cache,
-    const IntVector& grow_nodes);
+    const IntVector& grow_nodes, Random& pgrandom);
 
   bool swap(const Data& train_data, const Control& control, const Param& param, const Cache& cache,
-    const IntVector& grow_nodes);
+    const IntVector& grow_nodes, Random& pgrandom);
 
-  bool sample(const Data& train_data, const Control& control, const Param& param, const Cache& cache);
+  bool sample(const Data& train_data, const Control& control, const Param& param, const Cache& cache, Random& pgrandom);
 
   bool check_if_same(const double log_acc, const double loglik_diff, const double logprior_diff);
 
@@ -124,7 +125,7 @@ TreeMCMC_Ptr init_cgm_mcmc(const Data& train_data, const Control& control, const
   const Cache& cache, const CacheTemp& cache_temp);
 
 tuple<TreeMCMC_Ptr, bool> run_cgm_mcmc_single_tree(TreeMCMC_Ptr tree_mcmc_ptr, const Control& control,
-  const Data& train_data, const Param& param, const Cache& cache, const CacheTemp& cache_temp);
+  const Data& train_data, const Param& param, const Cache& cache, const CacheTemp& cache_temp, Random& pgrandom);
 
 } // namesapce pgbart
 

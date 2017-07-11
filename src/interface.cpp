@@ -83,13 +83,14 @@ Rcpp::List train(NumericMatrix& train_data, NumericVector& train_label, bool if_
 	*/
 
   // collect all the parameters in an object
+
   Control control(alpha_bart, alpha_split, beta_split, if_center_label, if_debug, ess_threshold, init_seed_id, if_set_seed,
     k_bart, m_bart, min_size, ndpost, nskip, keepevery, variance_type, q_bart, verbose_level, n_particles, resample_type, mcmc_type);
-
   cout << control.toString() << endl;
+  pgbart::Random pgrandom;
   if (if_set_seed){
     cout << "Setting random seed_id = " << init_seed_id << endl;
-    set_random_seed(init_seed_id);
+    pgrandom.set_random_seed(init_seed_id);
   }
   else{
     cout << "Not Setting random seed" << endl;
@@ -153,11 +154,11 @@ Rcpp::List train(NumericMatrix& train_data, NumericVector& train_label, bool if_
   // find all the potential split point
   // and initialize the parameters of the training process
   Param_Ptr param_ptr; Cache_Ptr cache_ptr; CacheTemp_Ptr cache_temp_ptr;
-  tie(param_ptr, cache_ptr, cache_temp_ptr) = precompute(data_train, control);
+  tie(param_ptr, cache_ptr, cache_temp_ptr) = precompute(data_train, control, pgrandom);
   Param& param = *param_ptr; Cache& cache = *cache_ptr; CacheTemp& cache_temp = *cache_temp_ptr;
 
   // initialize the bart model
-  Bart bart(data_train, param, control, cache, cache_temp);
+  Bart bart(data_train, param, control, cache, cache_temp, pgrandom);
 
   bool change = true;
 
@@ -169,7 +170,7 @@ Rcpp::List train(NumericMatrix& train_data, NumericVector& train_label, bool if_
   cout << "initial settings: " << endl;
   cout << "lamda_bart = " << param.lambda_bart << endl;
 
-  // conpute mse and loglik for the initial status
+  // compute mse and loglik for the initial status
   double loglik_train, mse_train;
   tie(loglik_train, mse_train) = bart.compute_train_loglik(data_train, param);
   cout << "mse_train = " << mse_train << ", loglik_train = " << loglik_train << endl;
@@ -179,7 +180,7 @@ Rcpp::List train(NumericMatrix& train_data, NumericVector& train_label, bool if_
   for (UINT itr = 0; itr < total_iteration; itr++) {
     double logprior = 0.0;
     // sampling lambda_bart
-    bart.sample_lambda_bart(data_train, param);
+    bart.sample_lambda_bart(data_train, param, pgrandom);
 
   	if (itr < nskip && itr % control.keepevery == 0) {
   		vector_first_sigma[i_first_sigma] = param.lambda_bart;
@@ -194,10 +195,9 @@ Rcpp::List train(NumericMatrix& train_data, NumericVector& train_label, bool if_
     logprior += bart.lambda_logprior;
 
 	   // sample each tree by random order
-    tree_order = shuffle(const_cast<IntVector&>(tree_order));
+    pgrandom.shuffle(tree_order);
 
     for (auto tree_id : tree_order) {
-
       if (control.if_debug) {
         cout << "\ntree_id = " << tree_id << endl;
       }
@@ -206,29 +206,29 @@ Rcpp::List train(NumericMatrix& train_data, NumericVector& train_label, bool if_
         cout << "\n\ncompute residuals for the "<< tree_id << "-th tree!  " << itr << endl;
 
 	  // update residuals for i_t-th tree
-
       bart.update_residual(tree_id, data_train);
       update_cache_temp(cache_temp, cache, data_train, param, control);
       // MCMC for i_t-th tree
 	  if (control.mcmc_type == "pg") {
 		  bart.p_particles[tree_id]->update_loglik_node_all(data_train, param, cache, control);
 		  tie(bart.p_particles[tree_id], change) = run_particle_mcmc_single_tree(control, data_train, param,
-        cache, change, cache_temp, bart.pmcmc_objects[tree_id]);
+        cache, change, cache_temp, bart.pmcmc_objects[tree_id], pgrandom);
       // tie(bart.p_particles[tree_id], change) = run_particle_mcmc_single_tree(bart.p_particles[tree_id], control, data_train, param,
 			 //  cache, change, cache_temp, bart.pmcmc_objects[tree_id]);
 		  // sample mu for i_t-th tree
-		  sample_param(bart.p_particles[tree_id], param, false);
+
+		  sample_param(bart.p_particles[tree_id], param, false, pgrandom);
 		  logprior += bart.p_particles[tree_id]->pred_val_logprior;
 	  }
 	  else if (control.mcmc_type == "cgm") {
 		  bart.p_treemcmcs[tree_id]->update_loglik_node_all(data_train, param, cache, control);
 		  tie(bart.p_treemcmcs[tree_id], change) = run_cgm_mcmc_single_tree(bart.p_treemcmcs[tree_id], control, data_train, param,
-			  cache, cache_temp);
+			  cache, cache_temp, pgrandom);
 		  // sample mu for i_t-th tree
-		  sample_param(bart.p_treemcmcs[tree_id], param, false);
+		  sample_param(bart.p_treemcmcs[tree_id], param, false, pgrandom);
 		  logprior += bart.p_treemcmcs[tree_id]->pred_val_logprior;
 	  }
-
+      
       //update pred_val
       bart.update_pred_val(tree_id, data_train, param, control);
 
@@ -240,7 +240,7 @@ Rcpp::List train(NumericMatrix& train_data, NumericVector& train_label, bool if_
 		bart.p_treemcmcs[tree_id]->update_depth();
     }
 
-    logprior = -BART_DBL_MAX;
+    logprior = -__DBL_MAX__;
 
   	if (itr >= nskip && (itr - nskip) % keepevery == 0) {
   		time_t t = time(NULL);
@@ -284,15 +284,13 @@ Rcpp::List train(NumericMatrix& train_data, NumericVector& train_label, bool if_
   		// for each tree of the model, compute the pred_value
   		for (UINT m = 0; m < bart.p_particles.size(); m++) {
   			IntVector_Ptr leaf_id_ptr = bart.p_particles[m]->gen_rules_tree(data_test);
-  			DoubleVector_Ptr temp_ptr = bart.p_particles[m]->predict_real_val_fast(leaf_id_ptr);
+  			pgbart::DoubleVector_Ptr temp_ptr = bart.p_particles[m]->predict_real_val_fast(leaf_id_ptr);
   			for (UINT k = 0; k < n_point; k++) {
   				pred_result[k] += temp_ptr->at(k);
         }
-  			// delete leaf_id;
-  			// delete temp;
   		}
   		double mse_test = sum2(pred_result - data_test.y_original) / n_point;
-  		double loglik_test = 0.5 * n_point * (std::log(param.lambda_bart) - std::log(2 * BART_PI) - param.lambda_bart * mse_test);
+  		double loglik_test = 0.5 * n_point * (std::log(param.lambda_bart) - std::log(2 * PI) - param.lambda_bart * mse_test);
   		vector_mse_test[i_mse_test] = mse_test; i_mse_test++;
   		vector_loglik_test[i_loglik_test] = loglik_test; i_loglik_test++;
 
@@ -305,6 +303,7 @@ Rcpp::List train(NumericMatrix& train_data, NumericVector& train_label, bool if_
       i_yhat_test++;
   	}
   }
+  
 
   status_result["yhat.train"] = matrix_yhat_train;
   status_result["yhat.test"] = matrix_yhat_test;
@@ -315,11 +314,11 @@ Rcpp::List train(NumericMatrix& train_data, NumericVector& train_label, bool if_
   status_result["first.sigma"] = vector_first_sigma;
   status_result["sigma"] = vector_sigma;
   status_result["varcount"] = matrix_varcount;
-
   //save model to a file
-
+  
   save_model(model_file, pgbart_model);
-
+  
+  
   return status_result;
 }
 

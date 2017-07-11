@@ -47,7 +47,7 @@ return {"bool do_not_split_node_id", "SplitInfo split_info", "double log_sis_rat
 */
 tuple<bool, SplitInfo_Ptr, double, double, IntVector_Ptr, IntVector_Ptr, CacheTemp_Ptr>
 State::prior_proposal(const Data& data_train, const UINT& node_id, const IntVector& train_ids, const Param& param, const Cache& cache,
-const Control& control) {
+const Control& control, Random& pgrandom) {
   /*
   NOTE: a uniform prior over the features; see how feat_id_chosen is sampled below
   */
@@ -60,14 +60,15 @@ const Control& control) {
   CacheTemp_Ptr cache_temp_ptr;
 
   double not_split_prob = compute_not_split_prob(this->tree_ptr, node_id, param); // See expression (4) in PGBART paper
-  do_not_split_node_id = simulate_continuous_uniform_distribution(0.0, 1.0) <= not_split_prob;
+  do_not_split_node_id = pgrandom.simulate_continuous_uniform_distribution(0.0, 1.0) <= not_split_prob;
 
 
   bool split_not_supported = false;
 
   if (!do_not_split_node_id) {
     // randomly switch an feature to split, if there is no avaliable split point, chose another feature
-    const_cast<Cache&>(cache).range_n_dim_shuffle = shuffle(const_cast<Cache&>(cache).range_n_dim);
+    const_cast<Cache&>(cache).range_n_dim_shuffle = const_cast<Cache&>(cache).range_n_dim;
+    pgrandom.shuffle(const_cast<Cache&>(cache).range_n_dim_shuffle);
     for (auto feat_id_chosen_temp : cache.range_n_dim_shuffle) {
       DimensionInfo_Ptr demension_info_ptr = get_info_dimension(data_train, cache, train_ids, feat_id_chosen_temp);
       double x_min = demension_info_ptr->x_min;
@@ -82,7 +83,7 @@ const Control& control) {
       }
       double z_prior = feat_score_cumsum_prior_current[idx_max] - feat_score_cumsum_prior_current[idx_min];
       DoubleVector prob_split_prior = diff(at(feat_score_cumsum_prior_current, range(idx_min, idx_max + 1))- feat_score_cumsum_prior_current[idx_min]) / z_prior;
-      UINT idx_split_chosen = sample_multinomial_distribution(prob_split_prior);
+      UINT idx_split_chosen = pgrandom.sample_multinomial_distribution(prob_split_prior);
       UINT idx_split_global_temp = idx_split_chosen + idx_min + 1;
       double split_value_temp = const_cast<Cache&>(cache).feat_idx2midpoint[feat_id_chosen_temp][idx_split_global_temp];
       if (control.if_debug) {
@@ -153,8 +154,8 @@ const Control& control) {
     train_ids_left_ptr = IntVector_Ptr(new IntVector());
     train_ids_right_ptr = IntVector_Ptr(new IntVector());
     cache_temp_ptr = CacheTemp_Ptr(new CacheTemp());
-    cache_temp_ptr->loglik_left = -BART_DBL_MAX;
-    cache_temp_ptr->loglik_right = -BART_DBL_MAX;
+    cache_temp_ptr->loglik_left = -DBL_MAX;
+    cache_temp_ptr->loglik_right = -DBL_MAX;
 
   }
   return make_tuple(do_not_split_node_id, split_info_ptr, log_sis_ratio, logprior_nodeid,
@@ -226,7 +227,8 @@ void State::update_left_right_statistics(const UINT& node_id, const double& logp
 void State::remove_leaf_node_statistics(const UINT& node_id) {
   if (!delete_element(tree_ptr->leaf_node_ids, node_id)) {
     std::cout << "ERROR: fail to delete \"node_id = " << node_id << "\"!" << std::endl;  
-  } else {
+  }
+  else {
     math::delete_by_key(this->loglik, node_id);
     math::delete_by_key(this->train_ids, node_id);
     math::delete_by_key(this->logprior, node_id);
@@ -295,19 +297,15 @@ tuple<IntVector_Ptr, DoubleVector_Ptr, map<UINT, DimensionInfo_Ptr>, bool>
 return {"bool do_not_split_node_id", "SplitInfo split_info", "double logprior_nodeid"}
 */
 tuple<bool, SplitInfo_Ptr, double>
-  State::sample_split_prior(const UINT& node_id, const Data& data_train, const Param& param, const Control& control, const Cache& cache) {
+  State::sample_split_prior(const UINT& node_id, const Data& data_train, const Param& param, const Control& control, const Cache& cache, Random& pgrandom) {
   bool do_not_split_node_id;
   SplitInfo_Ptr split_info_ptr(new SplitInfo());
   double logprior_nodeid;
 
-
   IntVector& train_ids = this->train_ids[node_id];
 
-  std::cout << "\n\ntrain_ids.size = " << train_ids.size() << "\n";
-
-  //UINT n_train_ids = train_ids.size();
+  
   double log_prob_split = std::log(compute_split_prob(this->tree_ptr, node_id, param));
-  //double prob_not_split = compute_not_split_prob(this->tree_ptr, node_id, param);
 
   IntVector_Ptr feat_id_valid_ptr;
   DoubleVector_Ptr score_feat_ptr;
@@ -323,7 +321,8 @@ tuple<bool, SplitInfo_Ptr, double>
     split_info_ptr->split_chosen = 3.14; // i like pi :)
     split_info_ptr->idx_split_global = -1;
     logprior_nodeid = 0.0;
-  } else {
+  }
+  else {
     do_not_split_node_id = false;
     IntVector_Ptr feat_id_perm_ptr;
     UINT n_feat;
@@ -332,17 +331,23 @@ tuple<bool, SplitInfo_Ptr, double>
     tie(feat_id_perm_ptr, n_feat, log_prob_feat_ptr) =
       score_features(control, *feat_id_valid_ptr, *score_feat_ptr, split_not_supported);
 
-    UINT feat_id_chosen = sample_multinomial_scores(*score_feat_ptr);
+    UINT feat_id_chosen = pgrandom.sample_multinomial_scores(*score_feat_ptr);
     split_info_ptr->feat_id_chosen = feat_id_chosen;
     DimensionInfo_Ptr demension_info_ptr = at(feat_split_info, feat_id_chosen);
     UINT idx_min = demension_info_ptr->idx_min;
     UINT idx_max = demension_info_ptr->idx_max;
+
     DoubleVector& feat_score_cumsum_prior_current = demension_info_ptr->feat_score_cumsum_prior_current;
+
     double z_prior = feat_score_cumsum_prior_current[idx_max] - feat_score_cumsum_prior_current[idx_min];
     DoubleVector prob_split_prior = diff(at(feat_score_cumsum_prior_current, range(idx_min, idx_max + 1))
-      - feat_score_cumsum_prior_current[idx_min]) / z_prior;
-    UINT idx_split_chosen = sample_multinomial_distribution(prob_split_prior);
+      - feat_score_cumsum_prior_current[idx_min]) / z_prior; 
+
+    UINT idx_split_chosen = pgrandom.sample_multinomial_distribution(prob_split_prior);
     UINT idx_split_global = idx_split_chosen + idx_min + 1;
+
+    std::cerr << idx_split_global << "\n";
+
     split_info_ptr->idx_split_global = idx_split_global;
     double split_chosen = const_cast<Cache&>(cache).feat_idx2midpoint[feat_id_chosen][idx_split_global];
     split_info_ptr->split_chosen = split_chosen;
@@ -387,8 +392,7 @@ void State::print_tree() {
 }
 
 IntVector_Ptr State::gen_rules_tree(const Data& data_train){
-  // IntVector* leaf_id = new IntVector(data_train.x.n_row, 0);
-  IntVector_Ptr leaf_id_ptr = make_shared<IntVector>(data_train.n_point, 0);
+	IntVector_Ptr leaf_id_ptr = make_shared<IntVector>(data_train.x.n_row, 0);
   UINT row = data_train.x.n_row;
   UINT column = data_train.x.n_column;
   for (UINT node_id : this->tree_ptr->leaf_node_ids){
@@ -397,7 +401,6 @@ IntVector_Ptr State::gen_rules_tree(const Data& data_train){
       break;
     UINT nid = node_id;
     while (nid != 0){
-      //UINT pid = get_parent_id(nid);
       UINT pid = this->tree_ptr->getParentNodeID(nid);
       UINT feature_id = this->node_info[pid].feat_id_chosen;
       double split_value = this->node_info[pid].split_chosen;
@@ -425,7 +428,6 @@ IntVector_Ptr State::gen_rules_tree(const Data& data_train){
 }
 
 DoubleVector_Ptr State::predict_real_val_fast(IntVector_Ptr leaf_id_ptr){
-  // DoubleVector* pred_val = new DoubleVector(leaf_id->size());
   DoubleVector_Ptr pred_val_ptr = make_shared<DoubleVector>(leaf_id_ptr->size());
   UINT length = leaf_id_ptr->size();
   for (UINT i = 0; i < length; i++){
@@ -574,7 +576,7 @@ tuple<IntVector_Ptr, IntVector_Ptr, CacheTemp_Ptr>
 }
 
 //return {"Param param", "Cache cache", "CacheTemp cache_temp"}
-tuple<Param_Ptr, Cache_Ptr, CacheTemp_Ptr> precompute(const Data& data_train, const Control& control) {
+tuple<Param_Ptr, Cache_Ptr, CacheTemp_Ptr> precompute(const Data& data_train, const Control& control, Random& pgrandom) {
   Param_Ptr param_ptr(new Param());
   Cache_Ptr cache_ptr(new Cache());
   CacheTemp_Ptr cache_temp_ptr(new CacheTemp());
@@ -656,12 +658,13 @@ tuple<Param_Ptr, Cache_Ptr, CacheTemp_Ptr> precompute(const Data& data_train, co
   // pre-compute stuff
   //Cache cache;
   cache_ptr->nn_prior_term = 0.5 * std::log(param_ptr->mu_prec) - 0.5 * param_ptr->mu_prec * param_ptr->mu_mean * param_ptr->mu_mean;
-  cache_ptr->half_log_2pi = 0.5 * std::log(2 * BART_PI);
+  cache_ptr->half_log_2pi = 0.5 * std::log(2 * PI);
   // compute cache.nn_prior_term and cache.half_lod_2pi at first, otherwise fail to implement compute_normal_normalizer
   compute_normal_normalizer(*param_ptr, *cache_ptr, *cache_temp_ptr, "parent");
 
   cache_ptr->range_n_dim = range(0U, data_train.n_feature);
-  cache_ptr->range_n_dim_shuffle = shuffle(range(0U, data_train.n_feature));
+  cache_ptr->range_n_dim_shuffle = cache_ptr->range_n_dim;
+  pgrandom.shuffle(cache_ptr->range_n_dim_shuffle);
   cache_ptr->log_n_dim = std::log(data_train.n_feature);
 
   // log prior of k
@@ -790,7 +793,7 @@ double compute_gamma_loglik(double x, double alpha, double beta) {
 }
 
 double compute_normal_loglik(double x, double mu, double prec) {
-  return 0.5 * (std::log(prec) - std::log(2 * BART_PI) - prec * (x - mu) * (x - mu));
+  return 0.5 * (std::log(prec) - std::log(2 * PI) - prec * (x - mu) * (x - mu));
 }
 
 double compute_split_prob(const shared_ptr<Tree> tree, const size_t& node_id, const Param& param) {

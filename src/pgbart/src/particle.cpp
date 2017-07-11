@@ -44,7 +44,7 @@ Particle::Particle(const Particle& p) {
   this->isexisted = p.isexisted;
 }
 
-double Particle::process_node_id(const Data& data_train, const Param& param, const Control& control, const Cache& cache, const UINT& node_id) {
+double Particle::process_node_id(const Data& data_train, const Param& param, const Control& control, const Cache& cache, const UINT& node_id, Random& pgrandom) {
   double log_sis_ratio;
   if (do_not_split[node_id])
     log_sis_ratio = 0.0;
@@ -65,7 +65,7 @@ double Particle::process_node_id(const Data& data_train, const Param& param, con
 
     // find the split feature and split value equiprobably
     tie(do_not_split_node_id, split_info_ptr, log_sis_ratio, logprior_nodeid, train_ids_left_ptr, train_ids_right_ptr, cache_temp_ptr) =
-      this->prior_proposal(data_train, node_id, train_ids, param, cache, control);
+      this->prior_proposal(data_train, node_id, train_ids, param, cache, control, pgrandom);
 
     if (do_not_split_node_id)
       do_not_split[node_id] = true;
@@ -80,7 +80,7 @@ double Particle::process_node_id(const Data& data_train, const Param& param, con
   return log_sis_ratio;
 }
 
-void Particle::grow_next(const Data& data_train, const Param& param, const Control& control, const Cache& cache)
+void Particle::grow_next(const Data& data_train, const Param& param, const Control& control, const Cache& cache, Random& pgrandom)
 {
   /*
   grows just one node at a time (nodewise expansion)
@@ -119,7 +119,7 @@ void Particle::grow_next(const Data& data_train, const Param& param, const Contr
       }
       else {
         // do the split action
-        log_sis_ratio_temp += process_node_id(data_train, param, control, cache, node_id);
+        log_sis_ratio_temp += process_node_id(data_train, param, control, cache, node_id, pgrandom);
         break; // you have processed a non do_not_grow node, take a break!
       }
     }
@@ -173,7 +173,7 @@ tuple<double, double, DoubleVector_Ptr>
 }
 
 Vec_Particle_Ptr resample(const Vec_Particle_Ptr particles_ptr, DoubleVector_Ptr log_weights_ptr, const Control& control,
-  const double& log_pd, const double& ess, DoubleVector_Ptr weights_norm_ptr, Particle_Ptr tree_pg_ptr) {
+  const double& log_pd, const double& ess, DoubleVector_Ptr weights_norm_ptr, Particle_Ptr tree_pg_ptr, Random& pgrandom) {
   
   IntVector_Ptr pid_list_ptr;
   if (ess <= control.ess_threshold) {
@@ -181,12 +181,12 @@ Vec_Particle_Ptr resample(const Vec_Particle_Ptr particles_ptr, DoubleVector_Ptr
       // resample particles by the probability computed before
       // note that the first particle is the old tree except there is no old tree
       pid_list_ptr = IntVector_Ptr(new IntVector());
-      pid_list_ptr = resample_pids_basic(control, control.n_particles - 1, weights_norm_ptr);
-      std::random_shuffle(pid_list_ptr->begin(), pid_list_ptr->end()); // shuffle so that particle is assigned randomly
+      pid_list_ptr = resample_pids_basic(control, control.n_particles - 1, weights_norm_ptr, pgrandom);
+      pgrandom.shuffle(*pid_list_ptr); // shuffle so that particle is assigned randomly
       pid_list_ptr->insert(pid_list_ptr->begin(), 0);
     }
     else {
-      pid_list_ptr = resample_pids_basic(control, control.n_particles, weights_norm_ptr);
+      pid_list_ptr = resample_pids_basic(control, control.n_particles, weights_norm_ptr, pgrandom);
     }
     *log_weights_ptr = ones<double>(control.n_particles) * (log_pd - std::log(control.n_particles));
   }
@@ -208,12 +208,12 @@ Vec_Particle_Ptr resample(const Vec_Particle_Ptr particles_ptr, DoubleVector_Ptr
   return op_ptr;
 }
 
-IntVector_Ptr resample_pids_basic(const Control& control, const UINT& n_particles, DoubleVector_Ptr probs_ptr) {
+IntVector_Ptr resample_pids_basic(const Control& control, const UINT& n_particles, DoubleVector_Ptr probs_ptr, Random& pgrandom) {
   IntVector_Ptr pid_list_ptr;
   if (control.resample_type == "multinomial")
-    pid_list_ptr = sample_multinomial_particle(n_particles, probs_ptr);
+    pid_list_ptr = sample_multinomial_particle(n_particles, probs_ptr, pgrandom);
   else if (control.resample_type == "systematic")
-    pid_list_ptr = sample_systematic_particle(n_particles, probs_ptr);
+    pid_list_ptr = sample_systematic_particle(n_particles, probs_ptr, pgrandom);
   else {
     std::cout << "control.resample_type must be \"multinomial\" or \"systematic\"!" << std::endl;
     exit(1);
@@ -221,8 +221,8 @@ IntVector_Ptr resample_pids_basic(const Control& control, const UINT& n_particle
   return pid_list_ptr;
 }
 
-IntVector_Ptr sample_multinomial_particle(const UINT& n_particles, DoubleVector_Ptr probs_ptr) {
-  IntVector vec_time = sample_multinomial_distribution(*probs_ptr, n_particles);
+IntVector_Ptr sample_multinomial_particle(const UINT& n_particles, DoubleVector_Ptr probs_ptr, Random& pgrandom) {
+  IntVector vec_time = pgrandom.sample_multinomial_distribution(*probs_ptr, n_particles);
   IntVector_Ptr pid_list_ptr(new IntVector());
   for (size_t i = 0; i < vec_time.size(); i++) {
     UINT n_time = vec_time[i];
@@ -232,7 +232,7 @@ IntVector_Ptr sample_multinomial_particle(const UINT& n_particles, DoubleVector_
   return pid_list_ptr;
 }
 
-IntVector_Ptr sample_systematic_particle(const UINT& n_particles, DoubleVector_Ptr probs_ptr) {
+IntVector_Ptr sample_systematic_particle(const UINT& n_particles, DoubleVector_Ptr probs_ptr, Random& pgrandom) {
   /*
   systematic re-sampling algorithm.
   Note: objects with > 1/n probability (better than average) are guaranteed to occur atleast once.
@@ -249,7 +249,7 @@ IntVector_Ptr sample_systematic_particle(const UINT& n_particles, DoubleVector_P
   }
 
   DoubleVector cum_probs = cumsum(*probs_ptr);
-  double u = simulate_continuous_uniform_distribution(0.0, 1.0) / n_particles;
+  double u = pgrandom.simulate_continuous_uniform_distribution(0.0, 1.0) / n_particles;
   UINT i = 0;
   IntVector_Ptr indices_ptr(new IntVector());
   while (true) {
@@ -334,7 +334,7 @@ tuple<Vec_Particle_Ptr, DoubleVector_Ptr> init_particles(const Data& data_train,
 
 tuple<Vec_Particle_Ptr, double, DoubleVector_Ptr, double>
   run_smc(Vec_Particle_Ptr particles_ptr, const Data& data, const Control& control, const Param& param,
-  DoubleVector_Ptr log_weights_ptr, const Cache& cache, Particle_Ptr tree_pg_ptr) {
+  DoubleVector_Ptr log_weights_ptr, const Cache& cache, Particle_Ptr tree_pg_ptr, Random& pgrandom) {
   // See more information about this function in Algorithm 2 of the PGBART paper
   
   double log_pd = 0.0;
@@ -358,7 +358,7 @@ tuple<Vec_Particle_Ptr, double, DoubleVector_Ptr, double>
       if (control.verbose_level >= 1) {
         std::cout << "iteration = " << itr << ", log p(y|x) = " << log_pd << ", ess/n_particles = " << ess << std::endl;
       }
-      particles_ptr = resample(particles_ptr, log_weights_ptr, control, log_pd, ess, weights_norm_ptr, tree_pg_ptr);
+      particles_ptr = resample(particles_ptr, log_weights_ptr, control, log_pd, ess, weights_norm_ptr, tree_pg_ptr, pgrandom);
     }
     for (UINT i = 0; i < particles_ptr->size(); i++) {
       if (control.verbose_level >= 2) {
@@ -376,7 +376,7 @@ tuple<Vec_Particle_Ptr, double, DoubleVector_Ptr, double>
       }
       else {
         // the function to let the particles grow
-        (*particles_ptr)[i]->grow_next(data, param, control, cache);
+        (*particles_ptr)[i]->grow_next(data, param, control, cache, pgrandom);
       }
       (*particles_ptr)[i]->update_depth();
       if (control.verbose_level >= 2) {
@@ -434,7 +434,7 @@ tuple<Vec_Particle_Ptr, double, DoubleVector_Ptr, double>
   return make_tuple(particles_ptr, ess, log_weights_ptr, log_pd);
 }
 
-tuple<Vec_Particle_Ptr, double, DoubleVector_Ptr> init_run_smc(const Data& data, const Control& control, const Param& param, const Cache& cache, const CacheTemp& cache_tmp, Particle_Ptr tree_pg_ptr){
+tuple<Vec_Particle_Ptr, double, DoubleVector_Ptr> init_run_smc(const Data& data, const Control& control, const Param& param, const Cache& cache, const CacheTemp& cache_tmp, Particle_Ptr tree_pg_ptr, Random& pgrandom){
 
   // create new particles and their weights using the cache_tmp of the last iteration
   Vec_Particle_Ptr particles_ptr;
@@ -443,7 +443,7 @@ tuple<Vec_Particle_Ptr, double, DoubleVector_Ptr> init_run_smc(const Data& data,
   double ess;
   double log_pd;
   std::tie(particles_ptr, ess, log_weights_ptr, log_pd) =
-    run_smc(particles_ptr, data, control, param, log_weights_ptr, cache, tree_pg_ptr);
+    run_smc(particles_ptr, data, control, param, log_weights_ptr, cache, tree_pg_ptr, pgrandom);
   return make_tuple(particles_ptr, log_pd, log_weights_ptr);
 }
 
@@ -542,8 +542,8 @@ void grow_next_pg(Particle_Ptr particle_ptr, Particle_Ptr tree_pg_ptr, const UIN
   }
 }
 
-IntVector sample_multinomial_numpy(const UINT& n_particles, const DoubleVector& prob){
-  IntVector indices = sample_multinomial_distribution(prob, n_particles);
+IntVector sample_multinomial_numpy(const UINT& n_particles, const DoubleVector& prob, Random& pgrandom){
+  IntVector indices = pgrandom.sample_multinomial_distribution(prob, n_particles);
   IntVector pid_list;
   for (UINT i = 0; i < indices.size(); i++) {
     for (UINT j = 0; j < indices[i]; j++) {

@@ -30,9 +30,9 @@ public:
   Particle() { this->isexisted = true; };
   Particle(const Particle& p);
   
-  double process_node_id(const Data& data_train, const Param& param, const Control& control, const Cache& cache, const UINT& node_id);
+  double process_node_id(const Data& data_train, const Param& param, const Control& control, const Cache& cache, const UINT& node_id, Random& pgrandom);
 
-  void grow_next(const Data& data_train, const Param& param, const Control& control, const Cache& cache);
+  void grow_next(const Data& data_train, const Param& param, const Control& control, const Cache& cache, Random& pgrandom);
 
   void check_nodes_processed_itr();
 
@@ -54,13 +54,13 @@ tuple<double, double, DoubleVector_Ptr>
 
 /* return {"Particle op", "DoubleVector log_weights_new"} */
 Vec_Particle_Ptr resample(const Vec_Particle_Ptr particles_ptr, DoubleVector_Ptr log_weights_ptr, const Control& control,
-  const double& log_pd, const double& ess, DoubleVector_Ptr weights_norm_ptr, Particle_Ptr tree_pg_ptr);
+  const double& log_pd, const double& ess, DoubleVector_Ptr weights_norm_ptr, Particle_Ptr tree_pg_ptr, Random& pgrandom);
 
-IntVector_Ptr resample_pids_basic(const Control& control, const UINT& n_particles, DoubleVector_Ptr probs);
+IntVector_Ptr resample_pids_basic(const Control& control, const UINT& n_particles, DoubleVector_Ptr probs, Random& pgrandom);
 
-IntVector_Ptr sample_multinomial_particle(const UINT& n_particles, DoubleVector_Ptr probs_ptr);
+IntVector_Ptr sample_multinomial_particle(const UINT& n_particles, DoubleVector_Ptr probs_ptr, Random& pgrandom);
 
-IntVector_Ptr sample_systematic_particle(const UINT& n_particles, DoubleVector_Ptr probs_ptr);
+IntVector_Ptr sample_systematic_particle(const UINT& n_particles, DoubleVector_Ptr probs_ptr, Random& pgrandom);
 
 Vec_Particle_Ptr create_new_particles(const Vec_Particle_Ptr particles_ptr, IntVector_Ptr pid_list_ptr, const Control& control);
 
@@ -71,18 +71,18 @@ tuple<Vec_Particle_Ptr, DoubleVector_Ptr>
 
 tuple<Vec_Particle_Ptr, double, DoubleVector_Ptr, double>
   run_smc(Vec_Particle_Ptr particles_ptr, const Data& data, const Control& control, const Param& param,
-  DoubleVector_Ptr log_weights_ptr, const Cache& cache, Particle_Ptr tree_pg_ptr);
+  DoubleVector_Ptr log_weights_ptr, const Cache& cache, Particle_Ptr tree_pg_ptr, Random& pgrandom);
 
 tuple<Vec_Particle_Ptr, double, DoubleVector_Ptr>
   init_run_smc(const Data& data, const Control& control, const Param& param, const Cache& cache, 
-  const CacheTemp& cache_tmp, Particle_Ptr tree_pg_ptr);
+  const CacheTemp& cache_tmp, Particle_Ptr tree_pg_ptr, Random& pgrandom);
 
 bool check_do_not_grow(Vec_Particle_Ptr particles_ptr);
 
 void grow_next_pg(Particle_Ptr particle_ptr, Particle_Ptr tree_pg_ptr, const UINT& itr, const Control& control);
 
 
-IntVector sample_multinomial_numpy(const UINT& n_particles, const DoubleVector& prob);
+IntVector sample_multinomial_numpy(const UINT& n_particles, const DoubleVector& prob, Random& pgrandom);
 
 } // namesapce pgbart
 

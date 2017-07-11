@@ -1,6 +1,8 @@
 #ifndef PGBART_RANDOM_HPP
 #define PGBART_RANDOM_HPP
 
+//#define USE_PYTHON
+
 #include "pgbart/include/config.hpp"
 #include "pgbart/include/math.hpp"
 
@@ -16,28 +18,39 @@ Function List : void set_random_seed(UINT seed_id)
 ***************************************/
 
 namespace pgbart {
+  
+  class Random {
+  public:
+    std::random_device rd;
+    std::mt19937 generator;
+    std::default_random_engine shuffle_gen;
 
-void set_random_seed(UINT seed_id);
+  public:
+    Random();
+    void set_random_seed(UINT seed_id);
 
-// generte double form a half-closed interval [minValue, maxValue)
-double simulate_continuous_uniform_distribution(double minVaule, double maxValue);
-// generte integer form a closed interval [minValue, maxValue]
-UINT simulate_discrete_uniform_distribution(UINT minValue, UINT maxValue);
-int ramdom_choice(const IntVector& vec);
+    // generte double form a half-closed interval [minValue, maxValue)
+    double simulate_continuous_uniform_distribution(double minVaule, double maxValue);
+    // generte integer form a closed interval [minValue, maxValue]
+    UINT simulate_discrete_uniform_distribution(UINT minValue, UINT maxValue);
+    int ramdom_choice(const IntVector& vec);
 
-//double simulateNormalDistribution(double mean, double variance);
-double simulate_normal_distribution(double mean, double stddev);
+    //double simulateNormalDistribution(double mean, double variance);
+    double simulate_normal_distribution(double mean, double stddev);
 
-DoubleVector simulate_normal_distribution(double mean, double stddev, UINT n);
+    DoubleVector simulate_normal_distribution(double mean, double stddev, UINT n);
 
-double simulate_gamma_distribution(double alpha, double beta);
+    double simulate_gamma_distribution(double alpha, double beta);
 
-UINT sample_multinomial_distribution(const DoubleVector& probs);
+    UINT sample_multinomial_distribution(const DoubleVector& probs);
 
-IntVector sample_multinomial_distribution(const DoubleVector& probs, const UINT& n_time);
+    IntVector sample_multinomial_distribution(const DoubleVector& probs, const UINT& n_time);
 
-UINT sample_multinomial_scores(const DoubleVector& scores);
+    UINT sample_multinomial_scores(const DoubleVector& scores);
 
+    void shuffle(IntVector& ori_order);
+
+  };
 } // namespace pgbart
 
 #endif

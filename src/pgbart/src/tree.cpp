@@ -104,7 +104,7 @@ UINT Tree::getParentNodeID(UINT node_id) const {
     exit(1);
   }
   if (node_id == 0) {
-    return 0;
+	  return 0;
   }
   UINT parent_id = static_cast<UINT>(std::ceil(node_id / 2.0) - 1);
   return parent_id;
@@ -116,12 +116,12 @@ UINT Tree::getSiblingNodeID(UINT node_id) const {
     exit(1);
   }
   if (node_id == 0) {
-    return 0;
+	  return 0;
   }
-  const UINT parent = this->getParentNodeID(node_id);
-  const UINT left = this->getLeftNodeID(parent);
-  const UINT right = this->getRightNodeID(parent);
-  UINT sibling_id = 0;
+  const int parent = this->getParentNodeID(node_id);
+  const int left = this->getLeftNodeID(parent);
+  const int right = this->getRightNodeID(parent);
+  int sibling_id = 0;
   if (left == node_id) {
     sibling_id = right;
   }
@@ -183,8 +183,6 @@ DoubleVector Tree::pred_real_val(const Data& data_test) {
   // aggregate prediction vals outside and use lambda_bart to compute posterior
   DoubleVector pred_val(data_test.n_point, 0.0);
   const Matrix<double>& x_test = data_test.x;
-  //UINT n_point = x_test.n_row;
-  //UINT n_feature = x_test.n_column;
   for (UINT i = 0; i < data_test.n_point; i++) {
     const DoubleVector& x_ = x_test(i, ":");
     UINT node_id = traverse(x_);
@@ -192,5 +190,4 @@ DoubleVector Tree::pred_real_val(const Data& data_test) {
   }
   return pred_val;
 }
-
-} // namespace pgbart
+}

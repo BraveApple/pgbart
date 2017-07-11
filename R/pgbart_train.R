@@ -54,7 +54,7 @@ pgbart_train <- function(train_data, train_label, if_test = FALSE, test_data = m
     stop("min_size is minimum number of data points at leaf nodes, it must be not less than 1, default 1!")
   if(ndpost < 1)
     stop("ERROR: ndpost must be not less than 1")
-  if(nskip < 1)
+  if(nskip < 0)
     stop("ERROR: nskip must be not less than 1")
   if(keepevery < 1)
     stop("ERROR: keepevery must be not less than 1")

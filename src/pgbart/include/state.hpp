@@ -3,6 +3,7 @@
 
 #include <map>
 #include <tuple>
+#include <memory>
 
 #include "pgbart/include/tree.hpp"
 #include "pgbart/include/config.hpp"
@@ -21,7 +22,7 @@ public:
   map<UINT, double> sum_y2; // sum of square of labels on a node
   map<UINT, UINT> n_points; // number of data point on a node
   map<UINT, double> loglik; // loglik of a node
-  map<UINT, double> mu_mean_post; //mean of the normal distribution of mu on a node, posterior probability
+  map<UINT, double> mu_mean_post; //mean of the normal distribution of mu on a node, posterior probability 
   map<UINT, double> mu_prec_post; //stddev of the normal distribution of mu on a node, posterior probability
 
   map<UINT, IntVector> train_ids; // the id of data point on the node
@@ -41,7 +42,7 @@ public:
 
   tuple<bool, SplitInfo_Ptr, double, double, IntVector_Ptr, IntVector_Ptr, CacheTemp_Ptr>
     prior_proposal(const Data& data_train, const UINT& node_id, const IntVector& train_ids, const Param& param, const Cache& cache,
-    const Control& control);
+    const Control& control, Random& pgrandom);
 
   void update_left_right_statistics(const UINT& node_id, const double& logprior_nodeid, const SplitInfo& split_info,
     const CacheTemp& cache_temp, const Control& control, const IntVector& train_ids_left, const IntVector& train_ids_right,
@@ -53,14 +54,14 @@ public:
   return {"bool do_not_split_node_id", "SplitInfo split_info", "double logprior_nodeid"}
   */
   tuple<bool, SplitInfo_Ptr, double>
-    sample_split_prior(const UINT& node_id, const Data& data_train, const Param& param, const Control& control, const Cache& cache);
+    sample_split_prior(const UINT& node_id, const Data& data_train, const Param& param, const Control& control, const Cache& cache, Random& pgrandom);
 
   /*
   return {"IntVector feat_id_valid", "DoubleVector score_feat", "map<UINT, DimensionInfo> feat_split_info", "bool split_not_supported"}
   */
   tuple<IntVector_Ptr, DoubleVector_Ptr, map<UINT, DimensionInfo_Ptr>, bool>
     find_valid_dimensions(const Data& data_train, const Cache& cache, const IntVector& train_ids, const Control& control);
-
+  
   double compute_logprior();
 
   void update_depth();
@@ -73,19 +74,16 @@ public:
 
   void check_depth();
 
-  // IntVector* gen_rules_tree(const Data& data_train);
   IntVector_Ptr gen_rules_tree(const Data& data_train);
 
-  // DoubleVector* predict_real_val_fast(IntVector* leaf_id);
-  DoubleVector_Ptr predict_real_val_fast(IntVector_Ptr leaf_id);
+  DoubleVector_Ptr predict_real_val_fast(IntVector_Ptr leaf_id_ptr);
 
   void update_loglik_node(UINT node_id, const Data& data, const Param& param, const Cache& cache, const Control& control);
 
   void update_loglik_node_all(const Data& data, const Param& param, const Cache& cache, const Control& control);
 
 };
-
-} // namespace pgbart
+}
 
 namespace pgbart {
 double compute_nn_loglik(double x, double mu, double prec, double log_const);
@@ -107,7 +105,7 @@ tuple<IntVector_Ptr, IntVector_Ptr, CacheTemp_Ptr>
   const Cache& cache, const UINT& feat_id_chosen, const double& split_chosen, const IntVector& train_ids);
 
 //return {"Param param", "Cache cache", "CacheTemp cache_temp"}
-tuple<Param_Ptr, Cache_Ptr, CacheTemp_Ptr> precompute(const Data& data_train, const Control& control);
+tuple<Param_Ptr, Cache_Ptr, CacheTemp_Ptr> precompute(const Data& data_train, const Control& control, Random& pgrandom);
 
 void update_cache_temp(CacheTemp& cache_temp, const Cache& cache, const Data& data, const Param& param, const Control& control);
 
@@ -133,7 +131,6 @@ double compute_not_split_prob(const shared_ptr<Tree> tree_ptr, const size_t& nod
 void compute_normal_normalizer(const Param& param, const Cache& cache, CacheTemp& cache_temp, const string& str_node = "parent");
 
 DimensionInfo_Ptr get_info_dimension(const Data& data_train, const Cache& cache, const IntVector& train_ids, const UINT& feat_id);
-
-} // namespace pgbart
+}
 
 #endif

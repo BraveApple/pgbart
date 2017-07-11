@@ -20,7 +20,7 @@ public:
 
 public:
 
-  Bart(const Data& data_train, const Param& param, const Control& control, const Cache& cache, const CacheTemp& cache_temp);
+  Bart(const Data& data_train, const Param& param, const Control& control, const Cache& cache, const CacheTemp& cache_temp, Random& pgrandom);
   
   void update_pred_val(UINT i_t, const Data& data_train, const Param& param, const Control& control); // i_t stands for the i-th tree
 
@@ -35,9 +35,9 @@ public:
 
   map<string, DoubleVector_Ptr> predict_train(const Data& data, const Param& param, const Control& control);
 
-  void sample_labels(Data& data, const Param& param); // pg not use
+  void sample_labels(Data& data, const Param& param, Random& pgrandom); // pg not use
 
-  void sample_lambda_bart(const Data& data, Param& param);
+  void sample_lambda_bart(const Data& data, Param& param, Random& pgrandom);
 
   double compute_train_mse(const Data& data, const Control& control);
 
@@ -53,9 +53,9 @@ namespace pgbart {
 
 double compute_mse(const DoubleVector& y_true, const DoubleVector& y_pred);
 
-void sample_param(Particle_Ptr p_ptr, const Param& param, bool set_to_mean);
+void sample_param(Particle_Ptr p_ptr, const Param& param, bool set_to_mean, Random& pgrandom);
 
-void sample_param(TreeMCMC_Ptr treemcmc_ptr, const Param& param, bool set_to_mean);
+void sample_param(TreeMCMC_Ptr treemcmc_ptr, const Param& param, bool set_to_mean, Random& pgrandom);
 
 // convert the mean of labels to zero
 void center_labels(Data& data);
