@@ -596,8 +596,8 @@ void TreeMCMC::evaluate_new_subtree(const Data& train_data, const UINT node_id_s
 			cache_temp_ptr->sum_y2 = this->sum_y2_new[node_id];
 			compute_normal_normalizer(param, cache, *cache_temp_ptr, "parent");
 			this->loglik_new[node_id] = cache_temp_ptr->loglik;
-			this->mu_mean_post[node_id] = cache_temp_ptr->mu_mean_post;
-			this->mu_prec_post[node_id] = cache_temp_ptr->mu_prec_post;
+			this->mu_mean_post_new[node_id] = cache_temp_ptr->mu_mean_post;
+			this->mu_prec_post_new[node_id] = cache_temp_ptr->mu_prec_post;
 		}
 		if (check_if_included(this->tree_ptr->leaf_node_ids, node_id)){
 			if (stop_split(this->train_ids_new[node_id], control, train_data, cache)){
